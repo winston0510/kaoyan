@@ -204,7 +204,7 @@
 - **PROJECT_GUIDE.md 同步**：项目树 `ddl_favorites.sql` 行、第 3 节数据库备注、4.3 存储策略收藏行、第 10 节「执行 v3.2.0 新增 DDL」状态块均更新为 2026-08-30 已执行完成；另修复 4.2 节版本常量行、4.3 节 Cache API 行的过时版本字符串（v3.7.0 / kaoyan-v3.7.0 → v3.8.1 / kaoyan-v3.8.1）。
 - **APP_VERSION v3.8.0 → v3.8.1**；`public/sw.js` 缓存名同步 `kaoyan-v3.8.1`。
 - **线上部署完成（2026-08-30）**：排查发现线上 `llss.netlify.app` 最后发布为 2026-08-25（v3.6.0 之前旧版，缺 PWA / 主题 / favorites 云同步）；用户提供 Netlify PAT 后，通过 Netlify Deploy API（`POST /v1/sites/38b9bbf0-39f6-4610-a09a-79be94755f17/deploys`，zip 包 1.04MB）发布 v3.8.1 构建产物，deploy `6a93780f9a910429aec382e5` 状态 ready 并已发布；线上验证：首页 200 / hashed JS/CSS（index-Bj8hzJDQ.js / index-1RkQZVUU.css）/ `sw.js` 返回 `kaoyan-v3.8.1` / manifest 可访问。Netlify Token 按安全惯例不入库，用完即弃，建议后台撤销。
-- **部署修复（2026-08-30，样式错乱）**：首次部署后用户反馈前端样式错乱。定位根因：PowerShell 5 `Compress-Archive` 生成的 zip 内部路径使用反斜杠 `\` 分隔子目录（`assets\index-*.css`），Netlify 解压后子目录资源全部 404（首页/根目录文件正常，CSS/JS/图标缺失）→ 页面无样式无脚本。修复：改用 .NET `System.IO.Compression.ZipArchive` 手动打包（`Replace('\\','/')` 强制正斜杠，66 个文件路径全部校验正确），重新部署 deploy `6a9378e9d8a9018c3fb32667`（ready，2026-08-30T00:27:22Z 发布）；线上复查 6 项资源全部 200（`/`、`index-1RkQZVUU.css`、`index-Bj8hzJDQ.js`、manifest、icon.svg、sw.js）。前端源码/构建产物 hash 未变，版本保持 v3.8.1。
+- **部署修复（2026-08-30，样式错乱）**：首次部署后用户反馈前端样式错乱。定位根因：PowerShell 5 `Compress-Archive` 生成的 zip 内部路径使用反斜杠 `\` 分隔子目录（`assets\index-*.css`），Netlify 解压后子目录资源全部 404（首页/根目录文件正常，CSS/JS/图标缺失）→ 页面无样式无脚本。修复：改用 .NET `System.IO.Compression.ZipArchive` 手动打包（`Replace('\','/')` 强制正斜杠，66 个文件路径全部校验正确），重新部署 deploy `6a9378e9d8a9018c3fb32667`（ready，2026-08-30T00:27:22Z 发布）；线上复查 6 项资源全部 200（`/`、`index-1RkQZVUU.css`、`index-Bj8hzJDQ.js`、manifest、icon.svg、sw.js）。前端源码/构建产物 hash 未变，版本保持 v3.8.1。
 
 ### 说明
 - PAT 按安全惯例不入库记录，仅在执行时经环境变量传入（请求封装见 `supabase_import_v5.py`）。
@@ -421,4 +421,57 @@ v2 单文件 SPA（index.html 内联 CSS/JS）拆分为工程化多文件：TS s
 
 ## v2.1.0（2026-08-29）功能升级：云同步补齐双向
 
-v2.0.0 的云同步"只推不拉
+v2.0.0 的云同步"只推不拉"补齐为**双向**：新设备（或清除缓存后）打开页面，自动从云端拉取答题记录、错题本、每日统计数据并合并到本地，实现多设备数据互通。
+
+### 新增
+- **云端拉取合并 `pullFromDB()`**（第 505-517 行）：初始化连接成功后并行查询 `quiz_records`（最多 1000 条）/ `wrong_book` / `daily_stats` 三表，分别交 `mergeRecords` / `mergeWrongBook` / `mergeDailyStats` 合并入本地。
+- **合并去重规则**：
+  - `mergeRecords`：以 `question_id | created_at | is_correct | user_answer` 为键去重，按时间排序，本地最多保留 1000 条（云端+本地合并后截断）。
+  - `mergeWrongBook`：优先本地（按 `wrongTime` 时间戳，较新者胜），依赖题目缓存重建完整错题对象；`mastered` 采用 **OR 合并且只升不降**（合并本地 + 云端的掌握状态，不丢已掌握标记）。
+  - `mergeDailyStats`：按日期从云端填充本地 `today_*` 键；**今天的数据仅在本地缺失时填充**（本地当天的乐观计数优先），历史日期直接覆盖式填充。
+- **两个触发点自动拉取**：① SDK onload 初始化块（第 1051-1056 行，`initSupabase → syncQuestionsFromDB → pullFromDB → finishInit`）；② 管理页保存配置连接成功路径（第 364 行，与 `syncQuestionsFromDB` 并列）。
+- **APP_VERSION v2.0.0 → v2.1.0**（新增功能 → 主版本号 +1，管理页底部实时显示）。
+
+### 说明
+- 拉取失败静默忽略（`catch (e) {}`），不影响本地离线使用；未配置 Supabase 时不触发拉取。
+- PROJECT_GUIDE.md 已同步：行号映射（第 4.2 节）、存储策略（第 4.3 节改为"双向同步"）、初始化流程（第 4.4 节）、踩坑 8 现状、第 9 节 P1.5 勾选完成。
+
+---
+
+## v2.0.0（2026-08-29）大版本升级
+
+本次为一次大规模迭代：修复 2 个 P0 致命 Bug、新增答题数据云同步、恢复导入脚本、清理仓库。
+
+### 新增
+- **P1-1 答题数据云同步**：答题记录（`quiz_records`）、错题本（`wrong_book`）、每日统计（`daily_stats`）在连接 Supabase 后实时推送云端（`syncRecordToDB` / `syncWrongBookToDB` / `syncTodayToDB`），本地 localStorage 仍为即时数据源，云端为镜像备份，为多设备互通打基础（v2.1 计划补齐拉取合并）。
+- **版本管理机制**：新增 `APP_VERSION` 常量（当前 v2.0.0），管理页底部显示"当前版本"。
+- **本文件 CHANGELOG.md**：按版本记录每次修改（对齐项目规则）。
+- **schema.sql 新增 `daily_stats` 表**（stat_date 主键 + 每日 total/correct/wrong + RLS 策略）。✅ 已通过 Management API 直接在线上 Supabase（`tszojqkktvyjzcgsyenn`）执行建表 + RLS + 策略，4 张表与策略验证全部就绪，无需手动操作。
+
+### 修复
+- **P0：`finishQuiz()` 先置空后读取**：原逻辑先 `quizState = null` 再读统计，导致结果页永远显示 0 题 0%、"重做错题"按钮永不出现。现改为先读取统计与科目，再置空，并将科目写入 `quizContent` 的数据属性。
+- **P0：`retryWrong()` 科目丢失**：原逻辑在 `quizState` 已置空后从 `quizState?.subject` 取科目恒为空串，导致"没有错题"。现改为从 `quizContent.dataset.subject` 读取，并重置标题/进度条。
+- **P1-4 SDK 加载时序**：首页渲染从 DOMContentLoaded 同步执行改为 SDK 加载完成（onload/onerror）后再执行，保证首页以正确的连接模式渲染。
+
+### 工程调整
+- **恢复 `supabase_import_v5.py`**：从旧临时目录恢复至项目根目录；PAT 改为环境变量 `SUPABASE_PAT`（不再硬编码），`SQL_FILE` 改为相对脚本目录，失败块输出到脚本同目录。
+- **清理废弃 SQL**：`seed_all_dedup.sql` / `seed_all_updated.sql` / `seed_v2.sql` / `seed_math2_final.sql` / `seed_math2_generated.sql` / `seed_math2_enhanced.sql` 等 6 个无脚本引用的中间产物归档到 `archive/`。
+  - ⚠️ 纠正指南旧误判：`seed_all.sql` 是 `integrate_all.py` 的主输入（仍需保留在根目录），**不可归档**；否则重新整合题库会失败。`seed_politics_new.sql` 同为 `integrate_all.py` 输入，同样保留。
+- **更新 PROJECT_GUIDE.md**：勾选已完成待办、修正行号映射、同步最新架构信息。
+
+---
+
+## v1.0.0（2026-08-29）基线版本
+
+初始化基线，功能与旧工作区（`C:\Users\81089\Documents\本地traework\kaoyan-quiz-web`）一致。
+
+### 初始内容
+- 单文件 SPA（`index.html`，含内联 CSS/JS），支持政治 / 英语二 / 数学二 / 电路四科目。
+- 题库 9852 题（`seed_all_final.sql`，去重后口径）。
+- Supabase 双模式存储：题目云端拉取 + 本地缓存；答题记录 / 错题本 / 每日统计仅存本地。
+- 题库生成管线：`gen_*.js` → `integrate_all.py`（规范化 + 去重 + 来源增强）→ `seed_all_final.sql`。
+
+### 工程化沉淀
+- 项目拷贝至新工作区 `e:\AI工程\刷题项目\kaoyan-quiz-web`（经 `robocopy /E` 保留空目录）。
+- 两份开发指南合并为 `PROJECT_GUIDE.md`（唯一权威指南，含 16 项踩坑经验）。
+- 修正题目总数口径：README 9861 → 实际 9852。

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026考研全科知识点报告</title>
+<style>
+:root {
+  --primary: #4B3FE3;
+  --bg: #F8F9FC;
+  --card: #FFFFFF;
+  --text: #1A1A2E;
+  --text-secondary: #6B7280;
+  --border: #E5E7EB;
+  --radius: 12px;
+  --font: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', Roboto, sans-serif;
+  --math: #4B3FE3;
+  --circuit: #10B981;
+  --english: #F59E0B;
+  --politics: #EF4444;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.8;padding:0}
+.container{max-width:960px;margin:0 auto;padding:40px 24px}
+
+header{text-align:center;margin-bottom:48px}
+header h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--math),var(--circuit));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+header p{color:var(--text-secondary);font-size:1rem}
+
+.nav-tabs{display:flex;gap:4px;margin-bottom:32px;background:var(--card);border-radius:var(--radius);padding:4px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.nav-tab{flex:1;text-align:center;padding:12px 16px;border-radius:10px;cursor:pointer;font-weight:600;font-size:.9rem;transition:all .2s;border:none;background:transparent;color:var(--text-secondary)}
+.nav-tab:hover{background:#F3F4F6}
+.nav-tab.active{color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.12)}
+.nav-tab.math.active{background:var(--math)}
+.nav-tab.circuit.active{background:var(--circuit)}
+.nav-tab.english.active{background:var(--english)}
+.nav-tab.politics.active{background:var(--politics)}
+
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeIn .3s ease}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.card{background:var(--card);border-radius:var(--radius);padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);border:1px solid var(--border)}
+.card h2{font-size:1.2rem;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card h3{font-size:1rem;margin:16px 0 8px;color:var(--text)}
+
+table{width:100%;border-collapse:collapse;font-size:.88rem;margin:12px 0}
+th{background:#F8F9FC;padding:10px 14px;text-align:left;font-weight:600;font-size:.82rem;color:var(--text-secondary);border-bottom:2px solid var(--border)}
+td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:none}
+
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+.badge-star{background:#FEF3C7;color:#92400E}
+.badge-high{background:#FEE2E2;color:#991B1B}
+.badge-mid{background:#D1FAE5;color:#065F46}
+.badge-core{background:#EEECFF;color:#4B3FE3}
+
+.chapter-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.chapter-item{background:#F8F9FC;border-radius:8px;padding:14px;border-left:3px solid var(--primary)}
+.chapter-item .name{font-weight:600;font-size:.9rem}
+.chapter-item .detail{font-size:.8rem;color:var(--text-secondary);margin-top:4px}
+
+.keyword-grid{display:flex;flex-wrap:wrap;gap:8px}
+.keyword-tag{background:#F3F4F6;padding:4px 12px;border-radius:20px;font-size:.82rem;color:var(--text-secondary)}
+
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:16px 0}
+.stat-item{text-align:center;padding:16px;background:#F8F9FC;border-radius:8px}
+.stat-item .num{font-size:1.8rem;font-weight:800;color:var(--primary)}
+.stat-item .label{font-size:.78rem;color:var(--text-secondary);margin-top:4px}
+
+.tip-box{background:#EEECFF;border-left:4px solid var(--primary);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:.88rem}
+.warn-box{background:#FEF3C7;border-left:4px solid var(--english);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:.88rem}
+
+@media (max-width:640px){
+  .container{padding:20px 12px}
+  .nav-tab{font-size:.78rem;padding:10px 8px}
+  header h1{font-size:1.6rem}
+  .chapter-list{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>2026考研全科知识点报告</h1>
+  <p>政治 · 英语二 · 数学二 · 电路（北京交通大学 870）</p>
+</header>
+
+<!-- Navigation Tabs -->
+<div class="nav-tabs" id="navTabs">
+  <button class="nav-tab math active" onclick="switchTab('math2')">数学二</button>
+  <button class="nav-tab circuit" onclick="switchTab('circuit')">电路 (870)</button>
+  <button class="nav-tab english" onclick="switchTab('english2')">英语二</button>
+  <button class="nav-tab politics" onclick="switchTab('politics')">政治</button>
+</div>
+
+<!-- ==================== 数学二 ==================== -->
+<div class="tab-content active" id="tab-math2">
+
+<div class="card">
+  <h2>试卷结构</h2>
+  <div class="stat-grid">
+    <div class="stat-item"><div class="num">150</div><div class="label">满分</div></div>
+    <div class="stat-item"><div class="num">180min</div><div class="label">考试时间</div></div>
+    <div class="stat-item"><div class="num">10题</div><div class="label">选择题 50分</div></div>
+    <div class="stat-item"><div class="num">6题</div><div class="label">填空题 30分</div></div>
+    <div class="stat-item"><div class="num">6题</div><div class="label">解答题 70分</div></div>
+  </div>
+  <table>
+    <tr><th>科目</th><th>占比</th><th>约分值</th></tr>
+    <tr><td>高等数学</td><td>~80%</td><td>约117-120分</td></tr>
+    <tr><td>线性代数</td><td>~20%</td><td>约30-33分</td></tr>
+    <tr><td>概率论</td><td colspan="2" style="color:var(--politics)">不考</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>高等数学 — 各章节知识点与分值</h2>
+  <div class="chapter-list">
+    <div class="chapter-item">
+      <div class="name">第一章 函数、极限、连续</div>
+      <div class="detail">10-15% · 等价无穷小替换、间断点分类、零点定理</div>
+      <span class="badge badge-mid">中等</span>
+    </div>
+    <div class="chapter-item">
+      <div class="name">第二章 一元函数微分学</div>
+      <div class="detail">25-30% · 中值定理证明、洛必达法则、单调性/极值/凹凸性/渐近线</div>
+      <span class="badge badge-high">核心</span>
+    </div>
+    <div class="chapter-item">
+      <div class="name">第三章 一元函数积分学</div>
+      <div class="detail">25-30% · 变上限积分求导、定积分求面积/体积、反常积分</div>
+      <span class="badge badge-high">核心</span>
+    </div>
+    <div class="chapter-item">
+      <div class="name">第四章 多元函数微分学</div>
+      <div class="detail">10-15% · 偏导/全微分、拉格朗日乘数法、AC-B²判别</div>
+      <span class="badge badge-mid">中等</span>
+    </div>
+    <div class="chapter-item">
+      <div class="name">第五章 二重积分</div>
+      <div class="detail">10-15% · 极坐标计算、交换积分次序、对称性</div>
+      <span class="badge badge-mid">中等</span>
+    </div>
+    <div class="chapter-item">
+      <div class="name">第六章 常微分方程</div>
+      <div class="detail">15-20% · 二阶常系数方程、可降阶方程、应用题建模</div>
+      <span class="badge badge-high">核心</span>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>线性代数 — 各章节知识点</h2>
+  <table>
+    <tr><th>章节</th><th>核心考点</th><th>重要度</th></tr>
+    <tr><td>行列式</td><td>性质计算、展开定理、范德蒙德行列式</td><td><span class="badge badge-mid">★★★</span></td></tr>
+    <tr><td>矩阵</td><td>逆矩阵、伴随矩阵、矩阵的秩、初等变换</td><td><span class="badge badge-high">★★★★</span></td></tr>
+    <tr><td>向量</td><td>线性相关/无关判定、极大无关组、施密特正交化</td><td><span class="badge badge-high">★★★★</span></td></tr>
+    <tr><td>线性方程组</td><td>含参数讨论、基础解系、通解结构</td><td><span class="badge badge-core">★★★★★</span></td></tr>
+    <tr><td>特征值与特征向量</td><td>相似对角化判定、实对称矩阵正交对角化</td><td><span class="badge badge-core">★★★★★</span></td></tr>
+    <tr><td>二次型</td><td>正交变换化标准形、正定性判定、惯性指数</td><td><span class="badge badge-high">★★★★</span></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Top 10 高频考点</h2>
+  <table>
+    <tr><th>#</th><th>高等数学</th><th>线性代数</th></tr>
+    <tr><td>1</td><td>极限计算（等价无穷小+洛必达）</td><td>含参数线性方程组求解</td></tr>
+    <tr><td>2</td><td>中值定理证明题</td><td>特征值与特征向量</td></tr>
+    <tr><td>3</td><td>变上限积分求导</td><td>二次型标准化</td></tr>
+    <tr><td>4</td><td>定积分求面积/体积</td><td>矩阵秩相关</td></tr>
+    <tr><td>5</td><td>偏导与全微分</td><td>向量组线性相关性</td></tr>
+    <tr><td>6</td><td>复合函数求导</td><td>矩阵可对角化判定</td></tr>
+    <tr><td>7</td><td>二重积分（极坐标）</td><td>行列式计算</td></tr>
+    <tr><td>8</td><td>二阶常系数微分方程</td><td>伴随矩阵</td></tr>
+    <tr><td>9</td><td>间断点分类</td><td>正定性判定</td></tr>
+    <tr><td>10</td><td>最优化应用题</td><td>克莱姆法则</td></tr>
+  </table>
+</div>
+
+<div class="warn-box">
+  <strong>2026趋势：</strong>去套路化明显，概念题占比升至30%，纯计算题降至40%。全国平均分约65-70分。70%题目需要深度思考而非机械计算。
+</div>
+
+</div>
+
+<!-- ==================== 电路 ==================== -->
+<div class="tab-content" id="tab-circuit">
+
+<div class="card">
+  <h2>考试基本信息</h2>
+  <div class="stat-grid">
+    <div class="stat-item"><div class="num">150</div><div class="label">满分</div></div>
+    <div class="stat-item"><div class="num">180min</div><div class="label">考试时间</div></div>
+    <div class="stat-item"><div class="num">8题</div><div class="label">全部计算大题</div></div>
+    <div class="stat-item"><div class="num">邱关源</div><div class="label">《电路》第6版</div></div>
+  </div>
+  <div class="tip-box">2025年起全部为8道计算大题，无客观题。题量减少但计算量显著增大。</div>
+</div>
+
+<div class="card">
+  <h2>章节重要度分级（17章）</h2>
+  <table>
+    <tr><th>重要度</th><th>章节</th><th>说明</th></tr>
+    <tr><td><span class="badge badge-core">★★★★★ 必考</span></td><td>第3章 电阻电路一般分析 · 第4章 电路定理 · 第7章 时域分析 · 第9章 正弦稳态 · 第10章 耦合电感 · 第12章 三相电路 · 第14章 复频域分析 · 第16章 二端口网络</td><td>每年必出大题</td></tr>
+    <tr><td><span class="badge badge-high">★★★★ 高频</span></td><td>第2章 等效变换 · 第8章 相量法 · 第15章 矩阵形式</td><td>北交特色考点</td></tr>
+    <tr><td><span class="badge badge-mid">★★★ 常考</span></td><td>第1章 电路模型 · 第6章 储能元件 · 第11章 频率响应 · 第13章 非正弦周期 · 第17章 非线性电路</td><td>轮换出题</td></tr>
+    <tr><td><span class="badge badge-star">★ 不考</span></td><td>第18章 均匀传输线</td><td>大纲不要求</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>北交大870 Top 10 高频考点</h2>
+  <table>
+    <tr><th>排名</th><th>考点</th><th>章节</th><th>频率</th></tr>
+    <tr><td>1</td><td>戴维南/诺顿定理 + 最大功率传输</td><td>第4章</td><td><span class="badge badge-core">每年必考</span></td></tr>
+    <tr><td>2</td><td>节点电压法 / 回路电流法</td><td>第3章</td><td><span class="badge badge-core">每年必考</span></td></tr>
+    <tr><td>3</td><td>一阶电路三要素法</td><td>第7章</td><td><span class="badge badge-core">每年必考</span></td></tr>
+    <tr><td>4</td><td>正弦稳态电路功率计算</td><td>第9章</td><td><span class="badge badge-core">每年必考</span></td></tr>
+    <tr><td>5</td><td>二端口网络参数（Z/Y/H/T）</td><td>第16章</td><td><span class="badge badge-core">每年必考</span></td></tr>
+    <tr><td>6</td><td>三相电路相/线关系 + 功率</td><td>第12章</td><td><span class="badge badge-core">每年必考</span></td></tr>
+    <tr><td>7</td><td>耦合电感/理想变压器</td><td>第10章</td><td><span class="badge badge-core">每年必考</span></td></tr>
+    <tr><td>8</td><td>拉普拉斯变换运算法</td><td>第14章</td><td><span class="badge badge-core">每年必考</span></td></tr>
+    <tr><td>9</td><td>电路方程矩阵形式</td><td>第15章</td><td><span class="badge badge-high">高频</span></td></tr>
+    <tr><td>10</td><td>叠加定理 + 替代定理</td><td>第4章</td><td><span class="badge badge-high">高频</span></td></tr>
+  </table>
+</div>
+
+<div class="warn-box">
+  <strong>核心能力：</strong>计算能力是北交870生命线。复数运算、方程组求解、矩阵运算、拉普拉斯变换必须练到精准无误。
+</div>
+
+</div>
+
+<!-- ==================== 英语二 ==================== -->
+<div class="tab-content" id="tab-english2">
+
+<div class="card">
+  <h2>试卷结构</h2>
+  <div class="stat-grid">
+    <div class="stat-item"><div class="num">100</div><div class="label">满分</div></div>
+    <div class="stat-item"><div class="num">180min</div><div class="label">考试时间</div></div>
+    <div class="stat-item"><div class="num">48题</div><div class="label">总题量</div></div>
+    <div class="stat-item"><div class="num">5529</div><div class="label">大纲词汇</div></div>
+    <div class="stat-item"><div class="num">~59分</div><div class="label">2026平均分</div></div>
+  </div>
+  <table>
+    <tr><th>题型</th><th>题量</th><th>分值</th><th>建议用时</th></tr>
+    <tr><td>完形填空</td><td>20题 × 0.5分</td><td><strong>10分</strong></td><td>15分钟</td></tr>
+    <tr><td>阅读理解 Part A</td><td>20题 × 2分</td><td><strong>40分</strong></td><td>60分钟</td></tr>
+    <tr><td>新题型 Part B</td><td>5题 × 2分</td><td><strong>10分</strong></td><td>15分钟</td></tr>
+    <tr><td>翻译（英译汉）</td><td>1篇</td><td><strong>15分</strong></td><td>25分钟</td></tr>
+    <tr><td>写作（小+大）</td><td>2篇</td><td><strong>25分</strong></td><td>50分钟</td></tr>
+  </table>
+  <div class="tip-box">做题顺序建议：阅读→写作→新题型→翻译→完形填空（分值高的优先）</div>
+</div>
+
+<div class="card">
+  <h2>阅读理解 — 六大题型</h2>
+  <table>
+    <tr><th>题型</th><th>占比</th><th>解题方法</th></tr>
+    <tr><td><strong>细节题</strong></td><td>约65%</td><td>题干定位词→原文定位→比对选项</td></tr>
+    <tr><td>推理题</td><td>约15%</td><td>infer/imply/suggest → 逻辑推断</td></tr>
+    <tr><td>主旨题</td><td>约10%</td><td>首尾段+段落首尾句</td></tr>
+    <tr><td>词义猜测题</td><td>约5%</td><td>上下文线索+构词法</td></tr>
+    <tr><td>态度题</td><td>约3%</td><td>寻找情感色彩词汇</td></tr>
+    <tr><td>结构题</td><td>约2%</td><td>段落间逻辑关系</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>高频词汇（Top 30）</h2>
+  <div class="keyword-grid">
+    <span class="keyword-tag">address 处理</span>
+    <span class="keyword-tag">affect 影响</span>
+    <span class="keyword-tag">approach 方法</span>
+    <span class="keyword-tag">attribute 归因于</span>
+    <span class="keyword-tag">available 可获得的</span>
+    <span class="keyword-tag">benefit 利益</span>
+    <span class="keyword-tag">claim 声称</span>
+    <span class="keyword-tag">community 社区</span>
+    <span class="keyword-tag">concern 关注</span>
+    <span class="keyword-tag">consequence 结果</span>
+    <span class="keyword-tag">consumer 消费者</span>
+    <span class="keyword-tag">critical 关键的</span>
+    <span class="keyword-tag">data 数据</span>
+    <span class="keyword-tag">decline 下降</span>
+    <span class="keyword-tag">demonstrate 证明</span>
+    <span class="keyword-tag">economic 经济的</span>
+    <span class="keyword-tag">environment 环境</span>
+    <span class="keyword-tag">evidence 证据</span>
+    <span class="keyword-tag">factor 因素</span>
+    <span class="keyword-tag">global 全球的</span>
+    <span class="keyword-tag">impact 影响</span>
+    <span class="keyword-tag">indicate 表明</span>
+    <span class="keyword-tag">issue 问题</span>
+    <span class="keyword-tag">likely 可能的</span>
+    <span class="keyword-tag">potential 潜在的</span>
+    <span class="keyword-tag">process 过程</span>
+    <span class="keyword-tag">significant 重要的</span>
+    <span class="keyword-tag">tend 倾向于</span>
+    <span class="keyword-tag">view 观点</span>
+    <span class="keyword-tag">available 可获得的</span>
+  </div>
+</div>
+
+<div class="card">
+  <h2>完形填空 — 高频逻辑连接词</h2>
+  <div class="keyword-grid">
+    <span class="keyword-tag">however 然而</span>
+    <span class="keyword-tag">while 然而</span>
+    <span class="keyword-tag">although 尽管</span>
+    <span class="keyword-tag">because 因为</span>
+    <span class="keyword-tag">therefore 因此</span>
+    <span class="keyword-tag">thus 因此</span>
+    <span class="keyword-tag">moreover 此外</span>
+    <span class="keyword-tag">furthermore 此外</span>
+    <span class="keyword-tag">for example 例如</span>
+    <span class="keyword-tag">such as 例如</span>
+    <span class="keyword-tag">despite 尽管</span>
+    <span class="keyword-tag">consequently 结果</span>
+  </div>
+</div>
+
+<div class="warn-box">
+  <strong>2026趋势：</strong>去技巧化加速，反模板化明显。英一英二词汇表已统一。阅读Text3/4难度偏大。写作考了"儿童户外活动好处"柱状图。
+</div>
+
+</div>
+
+<!-- ==================== 政治 ==================== -->
+<div class="tab-content" id="tab-politics">
+
+<div class="card">
+  <h2>试卷结构</h2>
+  <div class="stat-grid">
+    <div class="stat-item"><div class="num">100</div><div class="label">满分</div></div>
+    <div class="stat-item"><div class="num">180min</div><div class="label">考试时间</div></div>
+    <div class="stat-item"><div class="num">38题</div><div class="label">总题量</div></div>
+    <div class="stat-item"><div class="num">16题</div><div class="label">单选 16分</div></div>
+    <div class="stat-item"><div class="num">17题</div><div class="label">多选 34分</div></div>
+    <div class="stat-item"><div class="num">5题</div><div class="label">分析 50分</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>六模块分值占比</h2>
+  <table>
+    <tr><th>模块</th><th>占比</th><th>约分值</th><th>2026变化</th></tr>
+    <tr><td>马克思主义基本原理</td><td>~22%</td><td>约22分</td><td>新增"当代资本主义新变化"</td></tr>
+    <tr><td>习近平新时代中国特色社会主义思想概论</td><td>~22%</td><td>约22分</td><td>新增"中国式现代化理论与实践"</td></tr>
+    <tr><td>毛泽东思想与中特理论</td><td>~13%</td><td>约13分</td><td>基本稳定</td></tr>
+    <tr><td>中国近现代史纲要</td><td>~15%</td><td>约15分</td><td>仅1处文字微调</td></tr>
+    <tr><td>思想道德与法治</td><td>~15%</td><td>约15分</td><td>基本稳定</td></tr>
+    <tr><td>形势与政策 + 当代</td><td>~13%</td><td>约13分</td><td>时政范围更新至2025.1-12</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>2026年超高频考点 Top 10</h2>
+  <table>
+    <tr><th>#</th><th>考点</th><th>所属模块</th></tr>
+    <tr><td>1</td><td><strong>新质生产力</strong></td><td>习思想 · 选择题+分析题全覆盖</td></tr>
+    <tr><td>2</td><td><strong>中国式现代化</strong></td><td>习思想 · 分析题核心</td></tr>
+    <tr><td>3</td><td><strong>"十五五"规划</strong></td><td>形势与政策</td></tr>
+    <tr><td>4</td><td><strong>对立统一规律（矛盾分析法）</strong></td><td>马原 · 分析题第一高频</td></tr>
+    <tr><td>5</td><td><strong>人类命运共同体</strong></td><td>当代 · 分析题核心</td></tr>
+    <tr><td>6</td><td><strong>高质量发展</strong></td><td>习思想</td></tr>
+    <tr><td>7</td><td><strong>全面从严治党（自我革命）</strong></td><td>习思想</td></tr>
+    <tr><td>8</td><td><strong>抗日战争（中共中流砥柱）</strong></td><td>史纲 · 分析题</td></tr>
+    <tr><td>9</td><td><strong>社会主义核心价值观</strong></td><td>思修法基</td></tr>
+    <tr><td>10</td><td><strong>全面依法治国</strong></td><td>思修法基</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>马原子模块分值</h2>
+  <table>
+    <tr><th>子模块</th><th>分值</th><th>高频题型</th></tr>
+    <tr><td>马克思主义哲学（唯物论+辩证法+认识论+唯物史观）</td><td>约16分</td><td>分析题+选择题</td></tr>
+    <tr><td>政治经济学（商品二因素、剩余价值、资本积累）</td><td>约4-6分</td><td>主要为选择题</td></tr>
+    <tr><td>科学社会主义</td><td>约2-4分</td><td>主要为选择题</td></tr>
+  </table>
+</div>
+
+<div class="warn-box">
+  <strong>2026命题趋势：</strong>时政深度融合，比重从28%升至42%。反模板化/反押题，"背的答案全在题干里"。选择题90%需结合材料分析。案例分析题占比提升至72%。
+</div>
+
+</div>
+
+</div><!-- /container -->
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelector('.nav-tab.' + name).classList.add('active');
+}
+</script>
+
+</body>
+</html>

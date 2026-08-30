@@ -1,0 +1,26 @@
+{
+  "name": "kaoyan-quiz-web",
+  "private": true,
+  "version": "3.0.0",
+  "type": "module",
+  "description": "考研刷题工具（政治/英语二/数学二/电路）",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.47.10",
+    "katex": "^0.16.47"
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.8",
+    "playwright-core": "^1.62.1",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vite-plugin-pwa": "^0.21.2",
+    "vitest": "^3.1.3"
+  }
+}

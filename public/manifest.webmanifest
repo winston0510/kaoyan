@@ -1,0 +1,15 @@
+{
+  "name": "考研刷题",
+  "short_name": "考研刷题",
+  "description": "考研刷题工具（政治/英语二/数学二/电路），支持离线使用",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F3F4F6",
+  "theme_color": "#4B3FE3",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

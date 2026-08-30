@@ -34,7 +34,7 @@
 在 Supabase 控制台的 **SQL Editor** 中依次执行：
 
 1. 复制 `schema.sql` 的全部内容 → 执行
-2. 复制 `seed_all_dedup.sql` 的全部内容 → 执行
+2. 复制 `seed.sql` 的全部内容 → 执行
 
 #### 4. 配置应用
 

@@ -4,232 +4,55 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>考研刷题</title>
-<style>
-/* ====== CSS Variables ====== */
-:root {
-  --primary: #4B3FE3;
-  --primary-light: #EEECFF;
-  --primary-dark: #3B2FD3;
-  --success: #10B981;
-  --success-light: #D1FAE5;
-  --danger: #EF4444;
-  --danger-light: #FEE2E2;
-  --warning: #F59E0B;
-  --warning-light: #FEF3C7;
-  --text: #1A1A2E;
-  --text-secondary: #6B7280;
-  --text-light: #9CA3AF;
-  --bg: #F3F4F6;
-  --card: #FFFFFF;
-  --border: #E5E7EB;
-  --radius: 12px;
-  --radius-lg: 16px;
-  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
-  --font: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', Roboto, sans-serif;
-}
-
-/* ====== Reset ====== */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{font-size:16px;-webkit-text-size-adjust:100%}
-body{font-family:var(--font);color:var(--text);background:var(--bg);line-height:1.6;min-height:100vh;overflow-x:hidden}
-button,input,select,textarea{font-family:inherit;font-size:inherit}
-button{cursor:pointer;border:none;background:none;color:inherit}
-
-/* ====== Utility ====== */
-.flex{display:flex}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}.flex-1{flex:1}.flex-wrap{flex-wrap:wrap}
-.text-center{text-align:center}.text-sm{font-size:.8125rem}.text-xs{font-size:.75rem}.text-lg{font-size:1.0625rem}.text-xl{font-size:1.25rem}.text-2xl{font-size:1.5rem}.text-3xl{font-size:2rem}
-.font-bold{font-weight:700}.font-semibold{font-weight:600}.font-medium{font-weight:500}
-.text-success{color:var(--success)}.text-danger{color:var(--danger)}.text-primary{color:var(--primary)}.text-secondary{color:var(--text-secondary)}
-.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-24{margin-top:24px}.mt-32{margin-top:32px}.mb-8{margin-bottom:8px}.mb-16{margin-bottom:16px}.mb-24{margin-bottom:24px}
-.w-full{width:100%}
-
-/* ====== Layout ====== */
-.app{max-width:520px;margin:0 auto;min-height:100vh;position:relative}
-.page{display:none;padding-bottom:80px;animation:fadeIn .25s ease}
-.page.active{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-
-/* ====== Top Bar ====== */
-.topbar{position:sticky;top:0;z-index:100;background:var(--card);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.topbar-title{font-size:1.0625rem;font-weight:700}
-.topbar-back{font-size:1.25rem;color:var(--primary);padding:4px 8px}
-.topbar-action{font-size:.8125rem;color:var(--primary);font-weight:600;padding:4px 8px}
-
-/* ====== Bottom Nav ====== */
-.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:100;padding:6px 0 env(safe-area-inset-bottom,6px)}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;color:var(--text-light);font-size:.6875rem;transition:color .15s}
-.nav-item.active{color:var(--primary)}
-.nav-item svg{width:22px;height:22px}
-
-/* ====== Card ====== */
-.card{background:var(--card);border-radius:var(--radius-lg);padding:20px;margin:12px 16px;box-shadow:var(--shadow)}
-
-/* ====== Button ====== */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-radius:var(--radius);font-weight:600;font-size:.875rem;transition:all .15s;width:100%}
-.btn:active{transform:scale(.98)}
-.btn-primary{background:var(--primary);color:#fff}
-.btn-primary:hover{background:var(--primary-dark)}
-.btn-outline{background:transparent;color:var(--primary);border:2px solid var(--primary)}
-.btn-danger{background:var(--danger);color:#fff}
-.btn-sm{padding:8px 16px;font-size:.8125rem;width:auto}
-.btn:disabled{opacity:.5;pointer-events:none}
-
-/* ====== Badge/Tag ====== */
-.tag{display:inline-flex;padding:3px 10px;border-radius:20px;font-size:.6875rem;font-weight:600}
-.tag-green{background:var(--success-light);color:#065F46}
-.tag-red{background:var(--danger-light);color:#991B1B}
-.tag-blue{background:var(--primary-light);color:var(--primary)}
-.tag-gray{background:var(--bg);color:var(--text-secondary)}
-
-/* ====== Home Page ====== */
-.today-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--bg);border-radius:var(--radius-lg);overflow:hidden;margin:12px 16px;box-shadow:var(--shadow)}
-.today-stat{background:var(--card);padding:16px 12px;text-align:center}
-.today-stat .num{font-size:1.5rem;font-weight:700;line-height:1.2}
-.today-stat .lbl{font-size:.6875rem;color:var(--text-secondary);margin-top:2px}
-
-.subject-card{display:flex;align-items:center;gap:14px;padding:18px;background:var(--card);border-radius:var(--radius-lg);margin:0 16px 10px;box-shadow:var(--shadow);cursor:pointer;transition:transform .12s}
-.subject-card:active{transform:scale(.98)}
-.subject-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
-.subject-info{flex:1;min-width:0}
-.subject-name{font-size:.9375rem;font-weight:600}
-.subject-chapters{font-size:.75rem;color:var(--text-secondary);margin-top:2px}
-.subject-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.wrong-badge{background:var(--danger-light);color:#991B1B;font-size:.6875rem;font-weight:700;padding:4px 10px;border-radius:12px;white-space:nowrap}
-.subject-arrow{font-size:1.25rem;color:var(--text-light)}
-
-/* ====== Modal ====== */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .15s ease}
-.modal-panel{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;padding:24px 20px 40px;animation:slideUp .25s ease}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-.modal-title{font-size:1.0625rem;font-weight:700}
-.modal-close{font-size:1.25rem;color:var(--text-light);padding:4px;line-height:1}
-.chapter-tags{display:flex;flex-wrap:wrap;gap:8px}
-.chapter-tag{padding:8px 14px;border-radius:8px;font-size:.8125rem;background:var(--bg);color:var(--text-secondary);border:2px solid transparent;cursor:pointer;transition:all .12s}
-.chapter-tag.active{background:var(--primary-light);color:var(--primary);border-color:var(--primary)}
-.mode-option{display:flex;flex-direction:column;padding:14px;border-radius:var(--radius);background:var(--bg);border:2px solid transparent;cursor:pointer;margin-bottom:8px}
-.mode-option.active{background:var(--primary-light);border-color:var(--primary)}
-.mode-option .mode-title{font-size:.875rem;font-weight:600}
-.mode-option .mode-desc{font-size:.75rem;color:var(--text-secondary);margin-top:2px}
-input[type=range]{width:100%;margin:8px 0;-webkit-appearance:none;height:6px;background:var(--border);border-radius:3px;outline:none}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--primary);cursor:pointer}
-
-/* ====== Quiz Page ====== */
-.progress-wrap{padding:12px 16px;background:var(--card);border-bottom:1px solid var(--border)}
-.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
-.progress-fill{height:100%;background:var(--primary);border-radius:2px;transition:width .3s ease}
-.progress-text{display:flex;justify-content:space-between;margin-top:8px;font-size:.75rem;color:var(--text-secondary)}
-.question-area{padding:20px 16px}
-.q-meta{display:flex;gap:8px;margin-bottom:16px}
-.q-title{font-size:1rem;font-weight:500;line-height:1.7;margin-bottom:24px}
-.option{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:var(--card);border:2px solid var(--border);border-radius:var(--radius);margin-bottom:10px;cursor:pointer;transition:all .15s}
-.option:active{transform:scale(.99)}
-.option.selected{border-color:var(--primary);background:var(--primary-light)}
-.option.correct{border-color:var(--success);background:var(--success-light)}
-.option.wrong{border-color:var(--danger);background:var(--danger-light)}
-.option-letter{width:32px;height:32px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:.8125rem;font-weight:700;flex-shrink:0}
-.option.selected .option-letter{background:var(--primary);color:#fff}
-.option.correct .option-letter{background:var(--success);color:#fff}
-.option.wrong .option-letter{background:var(--danger);color:#fff}
-.option-text{flex:1;font-size:.875rem;line-height:1.5;padding-top:4px}
-.option-icon{font-size:1rem;padding-top:4px;flex-shrink:0}
-.feedback-banner{display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:var(--radius);font-weight:600;margin:0 16px}
-.feedback-banner.correct{background:var(--success-light);color:#065F46}
-.feedback-banner.wrong{background:var(--danger-light);color:#991B1B}
-.explanation-box{background:var(--card);border-radius:var(--radius);padding:16px;margin:12px 16px;border-left:3px solid var(--primary)}
-.explanation-box .exp-label{font-size:.75rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px}
-.explanation-box .exp-text{font-size:.8125rem;color:var(--text-secondary);line-height:1.6}
-
-/* ====== Result Page ====== */
-.result-hero{text-align:center;padding:32px 16px 20px}
-.result-hero .stars{font-size:2rem;color:#E5E7EB;margin-bottom:8px}
-.result-hero .stars .star-on{color:#F59E0B}
-.result-hero .msg{font-size:.9375rem;color:var(--text-secondary);margin-top:4px}
-.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--bg);border-radius:var(--radius-lg);overflow:hidden;margin:0 16px;box-shadow:var(--shadow)}
-.result-item{background:var(--card);padding:20px 12px;text-align:center}
-.result-item .num{font-size:1.75rem;font-weight:700;line-height:1.2}
-.result-item .lbl{font-size:.6875rem;color:var(--text-secondary);margin-top:4px}
-.accuracy-ring{width:140px;height:140px;border-radius:50%;background:var(--primary-light);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:20px auto}
-.accuracy-ring .pct{font-size:2.5rem;font-weight:800;color:var(--primary);line-height:1}
-.accuracy-ring .lbl{font-size:.75rem;color:var(--text-secondary)}
-
-/* ====== Wrong Book ====== */
-.filter-row{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
-.filter-row::-webkit-scrollbar{display:none}
-.filter-chip{flex-shrink:0;padding:8px 16px;border-radius:20px;font-size:.75rem;font-weight:500;background:var(--card);color:var(--text-secondary);border:1px solid var(--border);cursor:pointer}
-.filter-chip.active{background:var(--primary-light);color:var(--primary);border-color:var(--primary)}
-.wrong-card{background:var(--card);border-radius:var(--radius-lg);padding:16px;margin:0 16px 10px;border-left:4px solid var(--danger);box-shadow:var(--shadow)}
-.wrong-card .wc-header{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-.wrong-card .wc-question{font-size:.875rem;font-weight:500;line-height:1.6;margin-bottom:8px}
-.wrong-card .wc-options{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
-.wrong-card .wc-option{font-size:.75rem;padding:6px 10px;border-radius:6px;background:var(--bg)}
-.wrong-card .wc-option.correct-opt{background:var(--success-light);color:#065F46}
-.wrong-card .wc-option.wrong-opt{background:var(--danger-light);color:#991B1B}
-.wrong-card .wc-answer{font-size:.75rem;color:var(--text-secondary);display:flex;justify-content:space-between;cursor:pointer;padding:8px 0;border-top:1px solid var(--border)}
-.wrong-card .wc-detail{padding:10px;background:var(--bg);border-radius:8px;margin-top:8px;font-size:.75rem}
-.empty-state{text-align:center;padding:60px 20px}
-.empty-state .empty-icon{font-size:3rem;margin-bottom:12px}
-.empty-state .empty-title{font-size:1rem;font-weight:600;margin-bottom:4px}
-.empty-state .empty-desc{font-size:.8125rem;color:var(--text-secondary)}
-
-/* ====== Stats Page ====== */
-.stats-overview{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--bg);border-radius:var(--radius-lg);overflow:hidden;margin:12px 16px;box-shadow:var(--shadow)}
-.stats-overview .stat-item{background:var(--card);padding:20px 12px;text-align:center}
-.stats-overview .stat-item .num{font-size:1.5rem;font-weight:700;line-height:1.2}
-.week-chart{display:flex;gap:10px;padding:16px;background:var(--card);border-radius:var(--radius-lg);margin:0 16px;overflow-x:auto;box-shadow:var(--shadow)}
-.week-day{display:flex;flex-direction:column;align-items:center;flex:1;min-width:36px}
-.week-day .bar-wrap{width:20px;height:80px;background:var(--bg);border-radius:10px;display:flex;align-items:flex-end;overflow:hidden}
-.week-day .bar{width:100%;border-radius:10px;min-height:2px;transition:height .3s}
-.week-day .day-name{font-size:.625rem;color:var(--text-light);margin-top:6px}
-.week-day .day-num{font-size:.6875rem;font-weight:700;margin-top:2px}
-.subject-stat-row{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--card);border-radius:var(--radius);margin:0 16px 8px;box-shadow:var(--shadow)}
-.subject-stat-row .ss-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.125rem;flex-shrink:0}
-
-/* ====== Admin Page ====== */
-.admin-section{margin:0 16px 16px}
-.admin-section h3{font-size:.9375rem;font-weight:700;margin-bottom:12px}
-.form-group{margin-bottom:12px}
-.form-group label{display:block;font-size:.75rem;font-weight:600;color:var(--text-secondary);margin-bottom:4px}
-.form-group select,.form-group input,.form-group textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:.875rem;background:var(--card);color:var(--text);outline:none;transition:border-color .15s}
-.form-group select:focus,.form-group input:focus,.form-group textarea:focus{border-color:var(--primary)}
-.form-group textarea{min-height:80px;resize:vertical}
-.option-input-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
-.option-input-row .opt-letter{width:28px;font-weight:700;font-size:.8125rem;text-align:center}
-.option-input-row input{flex:1}
-.option-input-row .opt-del{color:var(--danger);font-size:1.125rem;cursor:pointer;padding:4px}
-.json-import{background:var(--card);border:2px dashed var(--border);border-radius:var(--radius-lg);padding:24px;text-align:center;cursor:pointer;margin:12px 16px;transition:border-color .15s}
-.json-import:hover{border-color:var(--primary)}
-.json-import .import-icon{font-size:2rem;margin-bottom:8px}
-.json-import .import-text{font-size:.8125rem;color:var(--text-secondary)}
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;background:var(--text);color:#fff;padding:10px 24px;border-radius:24px;font-size:.8125rem;font-weight:500;animation:toastIn .25s ease;pointer-events:none}
-@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-
-/* ====== Config Banner ====== */
-.config-banner{background:#FEF3C7;color:#92400E;padding:10px 16px;font-size:.75rem;text-align:center;display:none}
-.config-banner.show{display:block}
-.config-banner button{color:#92400E;font-weight:700;text-decoration:underline;margin-left:4px}
-</style>
+<script>try{if(localStorage.getItem('kaoyan_theme')==='dark'||(!localStorage.getItem('kaoyan_theme')&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+<meta name="theme-color" content="#4B3FE3">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="/icons/icon.svg">
+<link rel="stylesheet" href="/css/style.css">
+<script type="module" src="/src/main.ts"></script>
 </head>
 <body>
 <div class="app" id="app">
+  <!-- Config Banner -->
   <div class="config-banner" id="configBanner">
     ⚠ 请先配置 Supabase 连接信息 <button onclick="switchPage('admin')">去设置</button>
   </div>
 
+  <!-- ====== HOME PAGE ====== -->
   <div class="page active" id="page-home">
     <div class="topbar">
       <span class="topbar-title">考研刷题</span>
       <span class="topbar-action" onclick="switchPage('admin')">管理</span>
+      <span class="topbar-action" id="themeToggle" onclick="toggleTheme()">🌙</span>
     </div>
     <div class="today-stats" id="todayStats">
       <div class="today-stat"><div class="num" id="todayTotal">0</div><div class="lbl">今日刷题</div></div>
       <div class="today-stat"><div class="num text-success" id="todayCorrect">0</div><div class="lbl">正确</div></div>
       <div class="today-stat"><div class="num text-primary" id="todayRate">-</div><div class="lbl">正确率</div></div>
+      <div class="today-stat"><div class="num text-primary" id="todayStreak">0</div><div class="lbl">连续打卡</div></div>
     </div>
+    <div class="search-box">
+      <input type="search" id="searchInput" placeholder="搜索题目（如：极限、KVL、马原）" onkeydown="if(event.key==='Enter')doSearch()">
+      <span class="search-icon" onclick="doSearch()">🔍</span>
+    </div>
+    <div class="search-result-list" id="searchResults" style="display:none"></div>
     <div id="subjectList"></div>
   </div>
 
+  <!-- ====== SUBJECT PAGE (章节刷题, v3.9.0) ====== -->
+  <div class="page" id="page-subject">
+    <div class="topbar">
+      <span class="topbar-back" onclick="switchPage('home')">← 返回</span>
+      <span class="topbar-title" id="subjectTitle">科目</span>
+      <span class="topbar-action" style="visibility:hidden">·</span>
+    </div>
+    <div id="subjectContent"></div>
+  </div>
+
+  <!-- ====== QUIZ PAGE ====== -->
   <div class="page" id="page-quiz">
     <div class="topbar">
       <span class="topbar-back" onclick="quitQuiz()">← 返回</span>
@@ -240,6 +63,20 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     <div id="quizContent"></div>
   </div>
 
+  <!-- ====== FAVORITES PAGE ====== -->
+  <div class="page" id="page-favorites">
+    <div class="topbar">
+      <span class="topbar-title">我的收藏</span>
+      <span class="topbar-action" onclick="startFavQuiz()">开始作答</span>
+    </div>
+    <div class="filter-row" id="favFilter"></div>
+    <div id="favList"></div>
+    <div class="empty-state" id="favEmpty" style="display:none">
+      <div class="empty-icon">⭐</div><div class="empty-title">暂无收藏</div><div class="empty-desc">刷题时点击题目旁的 ☆ 即可收藏</div>
+    </div>
+  </div>
+
+  <!-- ====== WRONG BOOK PAGE ====== -->
   <div class="page" id="page-wrongbook">
     <div class="topbar"><span class="topbar-title">错题本</span></div>
     <div class="filter-row" id="wrongFilter"></div>
@@ -249,6 +86,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     </div>
   </div>
 
+  <!-- ====== STATS PAGE ====== -->
   <div class="page" id="page-stats">
     <div class="topbar"><span class="topbar-title">学习统计</span></div>
     <div class="stats-overview" id="statsOverview"></div>
@@ -258,6 +96,17 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     <div id="subjectStats"></div>
   </div>
 
+  <!-- ====== KNOWLEDGE PAGE (v4.0.0) ====== -->
+  <div class="page" id="page-knowledge">
+    <div class="topbar">
+      <span class="topbar-back" id="knowledgeTopBack" style="visibility:hidden">← 返回</span>
+      <span class="topbar-title" id="knowledgeTopTitle">知识库</span>
+      <span class="topbar-action" onclick="switchPage('admin')">管理</span>
+    </div>
+    <div id="knowledgeContent"></div>
+  </div>
+
+  <!-- ====== ADMIN PAGE ====== -->
   <div class="page" id="page-admin">
     <div class="topbar">
       <span class="topbar-back" onclick="switchPage('home')">← 返回</span>
@@ -275,10 +124,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       <h3 style="font-size:.9375rem;font-weight:700;margin-bottom:12px">添加题目</h3>
       <div class="form-group"><label>科目</label><select id="addSubject"><option value="politics">政治</option><option value="english2">英语二</option><option value="math2">数学二</option><option value="circuit">电路（北交大）</option></select></div>
       <div class="form-group"><label>章节</label><input type="text" id="addChapter" placeholder="如：马原 / 高等数学 / 阅读理解"></div>
-      <div class="form-group"><label>题型</label><select id="addType"><option value="single">单选题</option><option value="multiple">多选题</option><option value="judge">判断题</option></select></div>
+      <div class="form-group"><label>题型</label><select id="addType"><option value="single">单选题</option><option value="multiple">多选题</option><option value="judge">判断题</option><option value="fill">填空题</option><option value="essay">简答题</option></select></div>
       <div class="form-group"><label>题目</label><textarea id="addQuestion" placeholder="输入题目内容"></textarea></div>
       <div class="form-group"><label>选项</label><div id="optionInputs"><div class="option-input-row"><span class="opt-letter">A</span><input type="text" placeholder="选项 A"><span class="opt-del" onclick="delOption(this)">×</span></div><div class="option-input-row"><span class="opt-letter">B</span><input type="text" placeholder="选项 B"><span class="opt-del" onclick="delOption(this)">×</span></div><div class="option-input-row"><span class="opt-letter">C</span><input type="text" placeholder="选项 C"><span class="opt-del" onclick="delOption(this)">×</span></div><div class="option-input-row"><span class="opt-letter">D</span><input type="text" placeholder="选项 D"><span class="opt-del" onclick="delOption(this)">×</span></div></div><button class="btn btn-sm btn-outline mt-8" onclick="addOption()">+ 添加选项</button></div>
-      <div class="form-group"><label>正确答案</label><input type="text" id="addAnswer" placeholder="A 或 AB（多选）"></div>
+      <div class="form-group"><label>正确答案</label><input type="text" id="addAnswer" placeholder="A 或 AB（多选）；填空题可用 | 分隔多个可接受答案；简答题填参考答案"></div>
       <div class="form-group"><label>解析（可选）</label><textarea id="addExplanation" placeholder="题目解析"></textarea></div>
       <button class="btn btn-primary" onclick="addQuestion()">添加题目</button>
     </div>
@@ -290,12 +139,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       <input type="file" id="jsonFile" accept=".json" style="display:none" onchange="importJson(event)">
       <div id="importResult" style="font-size:.75rem;margin-top:8px;text-align:center"></div>
     </div>
+    <div class="card" style="text-align:center;font-size:.75rem;color:var(--text-secondary)" id="appVersion"></div>
   </div>
 
+  <!-- ====== Bottom Nav ====== -->
   <div class="bottom-nav" id="bottomNav">
     <div class="nav-item active" data-page="home" onclick="switchPage('home')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2H15C17 2 21 3 21 6V22L20 21L18 22L16 21L14 22L12 21L10 22L8 21L6 22L4 21L3 22V6C3 3 7 2 9 2Z"/></svg>
       <span>刷题</span>
+    </div>
+    <div class="nav-item" data-page="knowledge" onclick="switchPage('knowledge')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5V19.5ZM4 19.5A2.5 2.5 0 0 0 6.5 22H20V17"/></svg>
+      <span>知识库</span>
+    </div>
+    <div class="nav-item" data-page="favorites" onclick="switchPage('favorites')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+      <span>收藏</span>
     </div>
     <div class="nav-item" data-page="wrongbook" onclick="switchPage('wrongbook')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8V12M12 16h.01"/></svg>
@@ -307,558 +166,5 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     </div>
   </div>
 </div>
-
-<script>
-/* ====== 全局状态 ====== */
-const SUBJECTS = [
-  { id:'politics', name:'政治', icon:'📖', color:'#E74C3C', chapters:['马原','毛中特','习思想','史纲','思修','时政'] },
-  { id:'english2', name:'英语二', icon:'🔤', color:'#3498DB', chapters:['完形填空','阅读理解','新题型','翻译','写作'] },
-  { id:'math2', name:'数学二', icon:'📐', color:'#2ECC71', chapters:['高等数学','线性代数'] },
-  { id:'circuit', name:'电路', icon:'⚡', color:'#F39C12', chapters:['电路模型','电阻电路','电路定理','动态电路','正弦稳态','耦合电感','三相电路','复频域分析','二端口网络'] }
-];
-
-let db = null;
-let questionsCache = [];
-let quizState = null;
-let currentPage = 'home';
-
-/* ====== Supabase ====== */
-function initSupabase() {
-  const url = localStorage.getItem('supabase_url');
-  const key = localStorage.getItem('supabase_key');
-  if (url && key && window.supabase) {
-    db = window.supabase.createClient(url, key);
-    document.getElementById('configBanner').classList.remove('show');
-    document.getElementById('configStatus').textContent = '✅ 已连接 Supabase';
-    return true;
-  }
-  document.getElementById('configBanner').classList.add('show');
-  document.getElementById('configStatus').textContent = '⚠ 未连接，使用本地模式';
-  return false;
-}
-
-function saveConfig() {
-  const url = document.getElementById('supabaseUrl').value.trim();
-  const key = document.getElementById('supabaseKey').value.trim();
-  if (!url || !key) { toast('请填写完整信息'); return; }
-  localStorage.setItem('supabase_url', url);
-  localStorage.setItem('supabase_key', key);
-  if (initSupabase()) {
-    toast('连接成功！');
-    syncQuestionsFromDB();
-  } else {
-    toast('已保存，请刷新页面');
-  }
-}
-
-/* ====== Toast ====== */
-function toast(msg) {
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => { t.remove(); }, 2000);
-}
-
-/* ====== 页面切换 ====== */
-function switchPage(page) {
-  currentPage = page;
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  const nav = document.querySelector(`.nav-item[data-page="${page}"]`);
-  if (nav) nav.classList.add('active');
-  document.getElementById('bottomNav').style.display = (page === 'quiz' || page === 'admin') ? 'none' : '';
-
-  if (page === 'home') renderHome();
-  if (page === 'wrongbook') renderWrongBook();
-  if (page === 'stats') renderStats();
-  if (page === 'admin') {
-    document.getElementById('supabaseUrl').value = localStorage.getItem('supabase_url') || '';
-    document.getElementById('supabaseKey').value = localStorage.getItem('supabase_key') || '';
-    document.getElementById('configStatus').textContent = db ? '✅ 已连接 Supabase' : '⚠ 未连接，使用本地模式';
-  }
-}
-
-/* ====== 本地存储封装 ====== */
-function getLocal(key) { try { return JSON.parse(localStorage.getItem('kaoyan_' + key)) || []; } catch(e) { return []; } }
-function setLocal(key, val) { localStorage.setItem('kaoyan_' + key, JSON.stringify(val)); }
-
-/* ====== 题目加载 ====== */
-async function loadQuestions(subject) {
-  if (db) {
-    const { data } = await db.from('questions').select('*').eq('subject', subject);
-    return data || [];
-  }
-  return getLocal('questions').filter(q => q.subject === subject);
-}
-
-async function syncQuestionsFromDB() {
-  if (!db) return;
-  const { data } = await db.from('questions').select('*');
-  if (data) setLocal('questions', data);
-}
-
-async function addQuestionToDB(q) {
-  if (db) {
-    const { error } = await db.from('questions').insert(q);
-    if (error) { toast('添加失败: ' + error.message); return false; }
-  }
-  const all = getLocal('questions');
-  q.id = q.id || Date.now();
-  all.push(q);
-  setLocal('questions', all);
-  toast('添加成功！');
-  return true;
-}
-
-/* ====== 首页渲染 ====== */
-function renderHome() {
-  const today = getLocal('today_' + new Date().toISOString().split('T')[0]);
-  const tToday = today || { total:0, correct:0 };
-  document.getElementById('todayTotal').textContent = tToday.total;
-  document.getElementById('todayCorrect').textContent = tToday.correct;
-  document.getElementById('todayRate').textContent = tToday.total > 0 ? Math.round(tToday.correct/tToday.total*100)+'%' : '-';
-
-  const wrongBook = getLocal('wrongBook');
-  const html = SUBJECTS.map(s => {
-    const wc = wrongBook.filter(w => w.subject === s.id && !w.mastered).length;
-    return `<div class="subject-card" onclick="openSubject('${s.id}')">
-      <div class="subject-icon" style="background:${s.color}18">${s.icon}</div>
-      <div class="subject-info"><div class="subject-name">${s.name}</div><div class="subject-chapters">${s.chapters.length} 个章节</div></div>
-      <div class="subject-right">${wc > 0 ? `<span class="wrong-badge">${wc} 错题</span>` : ''}<span class="subject-arrow">›</span></div>
-    </div>`;
-  }).join('');
-  document.getElementById('subjectList').innerHTML = html;
-}
-
-/* ====== 科目选择弹窗 ====== */
-function openSubject(subjectId) {
-  const s = SUBJECTS.find(x => x.id === subjectId);
-  if (!s) return;
-  const wc = getLocal('wrongBook').filter(w => w.subject === subjectId && !w.mastered).length;
-  const chaptersHtml = s.chapters.map(c => `<span class="chapter-tag" data-chapter="${c}" onclick="toggleChapter(this)">${c}</span>`).join('');
-
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.innerHTML = `<div class="modal-panel" onclick="event.stopPropagation()">
-    <div class="modal-header"><span class="modal-title">${s.name} 刷题设置</span><span class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</span></div>
-    <div style="margin-bottom:20px"><label style="font-size:.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:8px">选择章节（不选则全部）</label>
-      <div class="chapter-tags" id="modalChapters">${chaptersHtml}</div>
-    </div>
-    <div style="margin-bottom:20px"><label style="font-size:.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:8px">刷题模式</label>
-      <div class="mode-option active" data-mode="random" onclick="selectMode(this)"><span class="mode-title">随机刷题</span><span class="mode-desc">从题库中随机抽取</span></div>
-      <div class="mode-option" data-mode="sequential" onclick="selectMode(this)"><span class="mode-title">顺序刷题</span><span class="mode-desc">按章节顺序练习</span></div>
-      ${wc > 0 ? `<div class="mode-option" data-mode="wrong" onclick="selectMode(this)"><span class="mode-title">错题重做</span><span class="mode-desc">仅做错题本中的题目</span></div>` : ''}
-    </div>
-    <div style="margin-bottom:20px"><label style="font-size:.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:8px">题目数量：<span id="modalCount">20</span> 题</label>
-      <input type="range" min="5" max="50" step="5" value="20" oninput="document.getElementById('modalCount').textContent=this.value">
-    </div>
-    <button class="btn btn-primary" onclick="startQuiz('${subjectId}', this)">开始刷题</button>
-  </div>`;
-  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-  document.body.appendChild(modal);
-}
-
-function toggleChapter(el) { el.classList.toggle('active'); }
-function selectMode(el) { el.parentElement.querySelectorAll('.mode-option').forEach(o => o.classList.remove('active')); el.classList.add('active'); }
-
-/* ====== 开始刷题 ====== */
-async function startQuiz(subjectId, btn) {
-  btn.disabled = true;
-  btn.textContent = '加载中...';
-  const modal = btn.closest('.modal-overlay');
-  const chapters = [...modal.querySelectorAll('#modalChapters .chapter-tag.active')].map(e => e.dataset.chapter);
-  const mode = modal.querySelector('.mode-option.active').dataset.mode;
-  const count = parseInt(modal.querySelector('input[type=range]').value);
-
-  let questions = [];
-  if (mode === 'wrong') {
-    questions = getLocal('wrongBook').filter(q => q.subject === subjectId && !q.mastered);
-  } else {
-    questions = await loadQuestions(subjectId);
-    if (chapters.length > 0) questions = questions.filter(q => chapters.includes(q.chapter));
-    if (mode === 'random') questions = shuffle(questions);
-  }
-  questions = questions.slice(0, count);
-
-  if (questions.length === 0) {
-    toast('该科目暂无题目，请先添加题目');
-    btn.disabled = false;
-    btn.textContent = '开始刷题';
-    return;
-  }
-
-  const s = SUBJECTS.find(x => x.id === subjectId);
-  quizState = {
-    subject: subjectId,
-    subjectName: s ? s.name : '',
-    questions,
-    index: 0,
-    correct: 0,
-    wrong: 0,
-    total: questions.length
-  };
-
-  modal.remove();
-  switchPage('quiz');
-  document.getElementById('quizTitle').textContent = s ? s.name : '刷题';
-  renderQuestion();
-}
-
-function shuffle(arr) { const a = [...arr]; for (let i = a.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-
-/* ====== 渲染题目 ====== */
-function renderQuestion() {
-  if (!quizState || quizState.index >= quizState.total) {
-    finishQuiz();
-    return;
-  }
-  const q = quizState.questions[quizState.index];
-  const pct = (quizState.index / quizState.total) * 100;
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('quizProgress').textContent = `${quizState.index + 1}/${quizState.total}`;
-
-  const typeLabels = { single:'单选题', multiple:'多选题', judge:'判断题' };
-  const typeLabel = typeLabels[q.type] || '单选题';
-  const isMultiple = q.type === 'multiple';
-
-  let optionsHtml = '';
-  if (q.options && q.options.length > 0) {
-    optionsHtml = q.options.map((opt, i) => {
-      const letter = String.fromCharCode(65 + i);
-      const text = opt.replace(/^[A-Z][.、．]\s*/, '');
-      return `<div class="option" data-letter="${letter}" onclick="${isMultiple ? 'toggleMultiOption' : 'selectOption'}(this, '${letter}')">
-        <span class="option-letter">${letter}</span><span class="option-text">${text}</span>
-      </div>`;
-    }).join('');
-  }
-
-  document.getElementById('quizContent').innerHTML = `
-    <div class="question-area">
-      <div class="q-meta"><span class="tag tag-blue">${typeLabel}</span><span class="tag tag-gray">${q.chapter || ''}</span></div>
-      <div class="q-title">${q.question}</div>
-      ${optionsHtml}
-      <button class="btn btn-primary mt-24" onclick="submitAnswer()" id="submitBtn">确认答案</button>
-    </div>
-    <div id="feedbackArea"></div>
-  `;
-}
-
-function selectOption(el, letter) {
-  if (el.parentElement.querySelector('.option.correct')) return;
-  el.parentElement.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-}
-
-function toggleMultiOption(el, letter) {
-  if (el.parentElement.querySelector('.option.correct')) return;
-  el.classList.toggle('selected');
-}
-
-function submitAnswer() {
-  if (!quizState) return;
-  const q = quizState.questions[quizState.index];
-  const isMultiple = q.type === 'multiple';
-  let userAnswer;
-
-  if (isMultiple) {
-    const selected = [...document.querySelectorAll('#quizContent .option.selected')].map(e => e.dataset.letter);
-    if (selected.length === 0) { toast('请至少选择一个选项'); return; }
-    userAnswer = selected.sort().join('');
-  } else {
-    const sel = document.querySelector('#quizContent .option.selected');
-    if (!sel) { toast('请选择一个选项'); return; }
-    userAnswer = sel.dataset.letter;
-  }
-
-  const correctAnswer = q.answer.trim().toUpperCase();
-  const isCorrect = userAnswer === correctAnswer;
-
-  const allOptions = document.querySelectorAll('#quizContent .option');
-  allOptions.forEach(o => {
-    if (isMultiple) {
-      if (correctAnswer.includes(o.dataset.letter)) o.classList.add('correct');
-      if (o.classList.contains('selected') && !correctAnswer.includes(o.dataset.letter)) o.classList.add('wrong');
-    } else {
-      if (o.dataset.letter === correctAnswer) o.classList.add('correct');
-      if (o.classList.contains('selected') && o.dataset.letter !== correctAnswer) o.classList.add('wrong');
-    }
-  });
-
-  document.getElementById('submitBtn').style.display = 'none';
-
-  if (isCorrect) quizState.correct++; else quizState.wrong++;
-
-  const today = new Date().toISOString().split('T')[0];
-  const todayStats = getLocal('today_' + today) || { total:0, correct:0 };
-  todayStats.total++;
-  if (isCorrect) todayStats.correct++;
-  setLocal('today_' + today, todayStats);
-
-  const records = getLocal('records');
-  records.push({ question_id: q.id, subject: q.subject, is_correct: isCorrect, user_answer: userAnswer, created_at: new Date().toISOString() });
-  setLocal('records', records.slice(-1000));
-
-  if (!isCorrect) {
-    const wrongBook = getLocal('wrongBook');
-    const exists = wrongBook.find(w => w.id === q.id);
-    if (!exists) {
-      wrongBook.push({ ...q, userAnswer, mastered: false, reviewCount: 0, wrongTime: Date.now() });
-    } else {
-      exists.userAnswer = userAnswer;
-      exists.wrongTime = Date.now();
-    }
-    setLocal('wrongBook', wrongBook);
-  } else {
-    const wrongBook = getLocal('wrongBook').filter(w => w.id !== q.id);
-    setLocal('wrongBook', wrongBook);
-  }
-
-  document.getElementById('feedbackArea').innerHTML = `
-    <div class="feedback-banner ${isCorrect ? 'correct' : 'wrong'}">
-      <span>${isCorrect ? '✓ 回答正确！' : '✗ 回答错误'}</span>
-    </div>
-    ${q.explanation ? `<div class="explanation-box"><div class="exp-label">正确答案：${correctAnswer}</div><div class="exp-text">${q.explanation}</div></div>` : `<div class="explanation-box"><div class="exp-label">正确答案：${correctAnswer}</div></div>`}
-    <div style="padding:0 16px">
-      <button class="btn btn-primary mt-16" onclick="nextQuestion()">${quizState.index + 1 < quizState.total ? '下一题' : '查看结果'}</button>
-    </div>
-  `;
-}
-
-function nextQuestion() {
-  quizState.index++;
-  renderQuestion();
-  document.getElementById('quizContent').scrollIntoView({ behavior:'smooth' });
-}
-
-function quitQuiz() {
-  if (quizState && quizState.index < quizState.total && quizState.index > 0) {
-    if (!confirm('确定要退出吗？当前进度将丢失。')) return;
-  }
-  quizState = null;
-  switchPage('home');
-}
-
-function finishQuiz() {
-  const correct = quizState?.correct || 0;
-  const wrong = quizState?.wrong || 0;
-  const total = quizState?.total || 0;
-  const accuracy = total > 0 ? Math.round(correct/total*100) : 0;
-  let stars = 1, msg = '继续加油！';
-  if (accuracy >= 90) { stars = 5; msg = '太棒了！掌握得非常好！'; }
-  else if (accuracy >= 80) { stars = 4; msg = '很不错，再巩固一下薄弱点！'; }
-  else if (accuracy >= 60) { stars = 3; msg = '还可以，需要加强练习！'; }
-  else if (accuracy >= 40) { stars = 2; msg = '基础还有些薄弱，多刷题！'; }
-
-  quizState = null;
-  document.getElementById('quizContent').innerHTML = `
-    <div class="result-hero">
-      <div class="stars">${'★'.repeat(stars).split('').map(() => '<span class="star-on">★</span>').join('')}${'★'.repeat(5-stars)}</div>
-      <div class="msg">${msg}</div>
-    </div>
-    <div class="result-grid">
-      <div class="result-item"><div class="num">${total}</div><div class="lbl">总题数</div></div>
-      <div class="result-item"><div class="num text-success">${correct}</div><div class="lbl">正确</div></div>
-      <div class="result-item"><div class="num text-danger">${wrong}</div><div class="lbl">错误</div></div>
-    </div>
-    <div class="accuracy-ring"><div class="pct">${accuracy}%</div><div class="lbl">正确率</div></div>
-    <div style="padding:0 16px">
-      <button class="btn btn-primary" onclick="switchPage('home')">继续刷题</button>
-      ${wrong > 0 ? `<button class="btn btn-outline mt-8" onclick="retryWrong()">重做错题 (${wrong}题)</button>` : ''}
-    </div>
-  `;
-  document.getElementById('progressFill').style.width = '100%';
-  document.getElementById('quizProgress').textContent = `${total}/${total}`;
-}
-
-function retryWrong() {
-  const subject = quizState?.subject || '';
-  const wrongBook = getLocal('wrongBook').filter(q => q.subject === subject && !q.mastered);
-  if (wrongBook.length === 0) { toast('没有错题'); return; }
-  quizState = { subject, questions: wrongBook, index:0, correct:0, wrong:0, total: wrongBook.length };
-  renderQuestion();
-}
-
-/* ====== 错题本 ====== */
-function renderWrongBook() {
-  const wrongBook = getLocal('wrongBook');
-  const activeSubject = document.querySelector('#wrongFilter .filter-chip.active')?.dataset?.subject || '';
-
-  const subjectFilter = wrongBook.filter(w => !w.mastered);
-  const filterHtml = `<span class="filter-chip ${activeSubject === '' ? 'active' : ''}" data-subject="" onclick="setWrongFilter('')">全部 (${subjectFilter.length})</span>` +
-    SUBJECTS.map(s => {
-      const cnt = subjectFilter.filter(w => w.subject === s.id).length;
-      return cnt > 0 ? `<span class="filter-chip ${activeSubject === s.id ? 'active' : ''}" data-subject="${s.id}" onclick="setWrongFilter('${s.id}')">${s.name} (${cnt})</span>` : '';
-    }).join('');
-  document.getElementById('wrongFilter').innerHTML = filterHtml;
-
-  const filtered = activeSubject ? subjectFilter.filter(w => w.subject === activeSubject) : subjectFilter;
-  document.getElementById('wrongEmpty').style.display = filtered.length === 0 ? '' : 'none';
-
-  const listHtml = filtered.map(q => {
-    const typeLabels = { single:'单选', multiple:'多选', judge:'判断' };
-    const sub = SUBJECTS.find(s => s.id === q.subject);
-    let optHtml = '';
-    if (q.options) {
-      optHtml = q.options.map((opt, i) => {
-        const letter = String.fromCharCode(65 + i);
-        const cls = letter === q.answer ? 'correct-opt' : (letter === q.userAnswer ? 'wrong-opt' : '');
-        return `<span class="wc-option ${cls}">${opt}</span>`;
-      }).join('');
-    }
-    return `<div class="wrong-card">
-      <div class="wc-header"><span class="tag tag-gray">${typeLabels[q.type] || ''}</span><span class="tag tag-red" style="font-size:.6875rem">${sub?sub.name:''} · ${q.chapter||''}</span></div>
-      <div class="wc-question">${q.question}</div>
-      ${optHtml ? `<div class="wc-options">${optHtml}</div>` : ''}
-      <div class="wc-answer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">
-        <span>你的答案：<b style="color:var(--danger)">${q.userAnswer}</b></span><span style="color:var(--primary)">查看答案</span>
-      </div>
-      <div class="wc-detail" style="display:none"><b style="color:var(--success)">正确答案：${q.answer}</b>${q.explanation ? `<br>${q.explanation}` : ''}</div>
-    </div>`;
-  }).join('');
-  document.getElementById('wrongList').innerHTML = listHtml;
-}
-
-function setWrongFilter(subject) {
-  document.querySelectorAll('#wrongFilter .filter-chip').forEach(c => c.classList.toggle('active', c.dataset.subject === subject));
-  renderWrongBook();
-}
-
-/* ====== 统计 ====== */
-function renderStats() {
-  const records = getLocal('records');
-  const today = new Date().toISOString().split('T')[0];
-  const todayStats = getLocal('today_' + today) || { total:0, correct:0 };
-
-  let totalQ = 0, totalC = 0;
-  const dayMap = {};
-  records.forEach(r => {
-    const d = r.created_at ? r.created_at.split('T')[0] : '';
-    if (d) {
-      if (!dayMap[d]) dayMap[d] = { total:0, correct:0 };
-      dayMap[d].total++;
-      if (r.is_correct) dayMap[d].correct++;
-    }
-    totalQ++;
-    if (r.is_correct) totalC++;
-  });
-
-  document.getElementById('statsOverview').innerHTML = `
-    <div class="stat-item"><div class="num">${totalQ}</div><div class="lbl">累计刷题</div></div>
-    <div class="stat-item"><div class="num text-success">${totalC}</div><div class="lbl">累计正确</div></div>
-    <div class="stat-item"><div class="num text-primary">${totalQ>0?Math.round(totalC/totalQ*100):0}%</div><div class="lbl">总正确率</div></div>
-  `;
-
-  let weekHtml = '';
-  const dayNames = ['日','一','二','三','四','五','六'];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const ds = d.toISOString().split('T')[0];
-    const stat = dayMap[ds] || { total:0, correct:0 };
-    const acc = stat.total > 0 ? Math.round(stat.correct/stat.total*100) : 0;
-    const color = acc >= 60 ? 'var(--success)' : (acc >= 30 ? 'var(--warning)' : 'var(--danger)');
-    weekHtml += `<div class="week-day"><div class="bar-wrap"><div class="bar" style="height:${Math.max(2, stat.total*4)}px;background:${color}"></div></div><div class="day-name">${dayNames[d.getDay()]}</div><div class="day-num">${stat.total}</div></div>`;
-  }
-  document.getElementById('weekChart').innerHTML = weekHtml;
-
-  const subjectHtml = SUBJECTS.map(s => {
-    const subRecords = records.filter(r => r.subject === s.id);
-    const wrongCount = getLocal('wrongBook').filter(w => w.subject === s.id && !w.mastered).length;
-    return `<div class="subject-stat-row">
-      <div class="ss-icon" style="background:${s.color}18">${s.icon}</div>
-      <div style="flex:1"><div style="font-weight:600;font-size:.875rem">${s.name}</div><div style="font-size:.75rem;color:var(--text-secondary)">累计 ${subRecords.length} 题</div></div>
-      ${wrongCount > 0 ? `<span class="tag tag-red">${wrongCount} 错题</span>` : ''}
-    </div>`;
-  }).join('');
-  document.getElementById('subjectStats').innerHTML = subjectHtml;
-}
-
-/* ====== 管理 - 添加选项 ====== */
-function addOption() {
-  const container = document.getElementById('optionInputs');
-  const count = container.children.length;
-  const letter = String.fromCharCode(65 + count);
-  const row = document.createElement('div');
-  row.className = 'option-input-row';
-  row.innerHTML = `<span class="opt-letter">${letter}</span><input type="text" placeholder="选项 ${letter}"><span class="opt-del" onclick="delOption(this)">×</span>`;
-  container.appendChild(row);
-}
-
-function delOption(el) {
-  const container = document.getElementById('optionInputs');
-  if (container.children.length <= 2) return;
-  el.closest('.option-input-row').remove();
-  [...container.children].forEach((row, i) => {
-    row.querySelector('.opt-letter').textContent = String.fromCharCode(65 + i);
-  });
-}
-
-async function addQuestion() {
-  const subject = document.getElementById('addSubject').value;
-  const chapter = document.getElementById('addChapter').value.trim();
-  const type = document.getElementById('addType').value;
-  const question = document.getElementById('addQuestion').value.trim();
-  const answer = document.getElementById('addAnswer').value.trim().toUpperCase();
-  const explanation = document.getElementById('addExplanation').value.trim();
-
-  if (!chapter || !question || !answer) { toast('请填写题目、章节和答案'); return; }
-
-  const optionInputs = [...document.querySelectorAll('#optionInputs input')];
-  const options = optionInputs.map((inp, i) => String.fromCharCode(65+i) + '. ' + inp.value.trim()).filter(o => o.length > 3);
-
-  const q = { subject, chapter, type, question, options, answer, explanation, difficulty:1, created_at: new Date().toISOString() };
-  if (await addQuestionToDB(q)) {
-    document.getElementById('addChapter').value = '';
-    document.getElementById('addQuestion').value = '';
-    document.getElementById('addAnswer').value = '';
-    document.getElementById('addExplanation').value = '';
-    optionInputs.forEach(inp => inp.value = '');
-  }
-}
-
-/* ====== JSON 导入 ====== */
-function importJson(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      const questions = Array.isArray(data) ? data : (data.questions || []);
-      const all = getLocal('questions');
-      let added = 0;
-      questions.forEach(q => {
-        q.id = q.id || Date.now() + Math.random();
-        q.created_at = q.created_at || new Date().toISOString();
-        if (!all.find(x => x.question === q.question && x.subject === q.subject)) {
-          all.push(q);
-          added++;
-        }
-      });
-      setLocal('questions', all);
-      if (db) {
-        for (const q of questions) {
-          await db.from('questions').upsert(q);
-        }
-      }
-      document.getElementById('importResult').textContent = `✅ 成功导入 ${added} 道题目`;
-      toast(`已导入 ${added} 道题目`);
-    } catch(err) {
-      document.getElementById('importResult').textContent = '❌ JSON 格式错误';
-      toast('JSON 格式错误');
-    }
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
-
-/* ====== 示例数据 ====== */
-function loadDemoData() {
-  const demo = [
-    { subject:'politics', chapter:'马原', type:'single', question:'马克思主义哲学认为，世界的统一性在于它的', options:['A. 存在性','B. 运动性','C. 物质性','D. 可知性'], answer:'C', explanation:'辩证唯物主义认为，世界的真正统一性在于它的物质性。' },
-    { subject:'politics', chapter:'马原', type:'single', question:'矛盾的两种基本属性是', options:['A. 普遍性和特殊性','B. 同一性和斗争性','C. 绝对性和相对性','D. 对抗性和非对抗性'], answer:'B', explanation:'矛盾的两种基本属性是同一性和斗争性。' },
-    { subject:'politics', chapter:'毛中特', type:'single', question:'毛泽东思想的活的灵魂是', options:['A. 武装斗争、统一战线、党的建设','B. 实事求是、群众路线、独立自主','C. 理论联系实际、密切联系群众、批评与自我批评','D. 土地革命、武装斗争、根据地建设'], answer:'B', explanation:'实事求是、群众路线、独立自主是毛泽东思想的活的灵魂。' },
-    { subject:'politics', chapter:'史纲', type:'single', question:'中国近代史上第一个不平等条约是', options:['A. 《北京条约》','B. 《天津条约》','C. 《南京条约》','D. 《马关条约》'], answer:'C', explanation:'1842年签订的《南京条约》是中国近代史上第一个不平等条约。' },
-    { subject:'politics', chapter:'思修', type:'single', question:'社会主义道德建设的核心是', options:['A. 集体主义','B. 为人民服务','C. 诚实守信','D. 爱国主义'], answer:'B', explanation:'为人民服务是社会主义道德建设的核心。' },
-    { subject:'english2', chapter:'阅读理解', type:'single', question:'What is the main idea of the passage about climate change?', options:['A. Climate change is a hoax','
+</body>
+</html>

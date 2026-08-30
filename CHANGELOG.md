@@ -25,6 +25,7 @@
 ### 部署
 - **线上部署完成（2026-08-30）**：`dist-deploy.zip`（66 文件，正斜杠路径，1,068,034 B）经 Netlify Deploy API（`POST /api/v1/sites/38b9bbf0-39f6-4610-a09a-79be94755f17/deploys`）发布到 `llss.netlify.app`，deploy `6a94bf684d7584dd913a54ff` 状态 ready（published 2026-08-30T23:40:25Z，error null）。
 - **线上验证全绿**：首页加载 `assets/index-DjSzWQhK.js` + `assets/index-D9c1O0fW.css`（v4.1.1 bundle）、`sw.js` 返回 `kaoyan-v4.1.1`、manifest「考研刷题」、静态资源全部 200；浏览器 UI——科目 政治 48 / 英语二 6 / 数学二 14 / 电路 15 章节、知识库 3 主题（数学二 40 公式 48 卡 / 电路 31 公式 28 卡 / 英语二 58 知识点 29 卡，共 105 张卡片）渲染正常、版本显示 v4.1.1、console 无 JS 错误。
+- **GitHub 仓库同步**：完整项目推送至 `winston0510/kaoyan` main（项目 commit `dae13b0b`）；补记本文档部署章节后二次同步修复线上一处同步截断（commit `413cde1f`），经 GitHub API 读取核对与本地 **477 行完全一致**（含 v1.0.0 / v2.0.0 / v2.1.0 / v4.1.1 全部章节）。
 - **Netlify PAT 安全处置**：有效令牌（`nfp_…`）保存至本地 `.local/netlify_token.txt` 不入库，后续部署自动读取、不再重复索要（用户要求）。
 
 ---

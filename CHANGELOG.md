@@ -6,6 +6,21 @@
 
 ---
 
+## v4.4.0（2026-08-31）布局风格优化：悬浮胶囊标签栏 + 三槽顶栏 + 2×2 彩色瓦片
+
+> 版本说明：**次版本号 +1**（纯视觉/布局层改造，参考 iOS 记账应用截图的布局与风格；功能 / 数据 / 架构零变化）。
+- **悬浮胶囊底部标签栏**：`.bottom-nav` 改悬浮胶囊（距底 10px + 安全区、左右 14px、`border-radius:30px`、强毛玻璃 + 阴影）；选中项胶囊高亮（`border-radius:24px` + `--fill`），文字/图标品牌紫。
+- **三槽顶栏**：8 个页面顶栏重构为 `tb-left/tb-center/tb-right`（单侧有按钮时标题仍光学居中）；新增 `.tb-btn` 40px 圆形/胶囊按钮（按压缩放 .92）与文字胶囊 `.tb-text`；首页顶栏新增副标题日期（`homeSub`，M月D日）。
+- **2×2 彩色统计瓦片**：首页/统计页 4 瓦片改 2×2 网格、标签在上大号数字在下（`column-reverse` 标签在上、DOM 不变）；新增明暗双套彩色令牌 `--tile1..4`/`--tileN-num`（浅色浅蓝/浅绿/浅紫/浅橙；暗色高饱和深色底 + 亮字色）。
+- **区块头 chips**：统计页「本周趋势 / 各科目」改 `.block-head`（左标题 + 右胶囊 chip：「本周 N 题」「共 4 科」）；section 标题品牌紫、右侧统计胶囊化。
+- **卡片扁平化**：subject-card/chapter-card/week-chart/search-result 等卡片/列表边框透明去描边（保留 wrong/fav-card 语义左色条）；页面底部留白加大避让悬浮标签栏。
+- **版本**：APP_VERSION v4.3.0→v4.4.0，sw 缓存 `kaoyan-v4.4.0`。
+- **验证**：build（含 tsc）通过（产物 `index-DSgPFxJG.js` 592.17 kB / `index-Dr9jaTsG.css` 64.39 kB）；iPhone 视口（390×844）截图 3 张目检悬浮胶囊标签栏/圆形按钮/彩色瓦片/chips 符合参考风格。
+- **部署**：`dist-deploy.zip`（70 文件，1,092,372 B）发布到 `llss.netlify.app`，deploy `6a9572f2b8459da15276d3ba` ready；线上验证全绿（新 bundle/CSS、tb-btn/homeSub/block-head/tile 令牌、sw 缓存名、图标 200）。
+- **GitHub 同步**：sw.js+constants.ts（`e01712c`）、index.html（`20c55cb`）、home.ts+stats.ts（`9ea25a0`）、CHANGELOG 精要条目（本提交）；`css/style.css` 约 31KB 超单次推送上限，不入 GitHub，以本地为准。
+
+---
+
 ## v4.3.0（2026-08-31）全站 UI iOS 化：玻璃拟态设计系统 + iOS 安全区适配
 
 > 版本说明：**次版本号 +1**（纯视觉层整体改造，功能 / 数据 / 架构零变化）。

@@ -6,6 +6,20 @@
 
 ---
 
+## v4.5.0（2026-08-31）APP 化交互细节 + 状态栏跟随主题（standalone 顶部白条修复）
+
+> 版本说明：**次版本号 +1**（交互 / 体验层优化，功能 / 数据 / 架构零变化）。
+- **状态栏跟随主题**（用户截图反馈：standalone 顶部状态栏恒白）：`apple-mobile-web-app-status-bar-style` 暗 `black-translucent` / 亮 `default` 动态分流；`theme-color` 同步（亮 #F2F2F7 / 暗 #000000）；head 内联脚本启动即同步双 meta 消白闪 + `theme.ts` `applyTheme` 运行时实时同步。
+- **APP 化交互细节**：`touch-action:manipulation` 消双击缩放 / 点延迟；`overscroll-behavior-y:none` 禁整页橡皮筋；`100dvh` 回退；按压反馈补全（`.nav-item:active` scale(.94)、chips/收藏等 opacity .75）；交互元素名单制禁选择 / 长按呼叫；输入框 ≥16px 防 iOS 聚焦缩放；`gesturestart` 防捏合。
+- **原生 TabBar 体验**：`navigation.ts` 滚动位记忆（Tab 页切回恢复、子页回顶）；`main.ts` hash 深链（knowledge/favorites/wrongbook/stats/admin 直达）。
+- **manifest shortcuts**：长按图标「继续刷题 /#home、学习统计 /#stats」（Android 生效）；`background_color` #F2F2F7。
+- **版本**：APP_VERSION v4.4.0→v4.5.0，sw 缓存 `kaoyan-v4.5.0`。
+- **验证**：build（含 tsc）通过（产物 `index-C6YBzUVM.js` 592.80 kB / `index-BKm-ISLC.css` 64.88 kB）；meta 同步端到端（实点 `#themeToggle`：亮 #F2F2F7/default → 暗 #000000/black-translucent）；iPhone 视口截图 3 张目检暗色全黑无白条。
+- **部署**：`dist-deploy.zip`（70 文件，1,092,948 B）发布到 `llss.netlify.app`，deploy `6a957aaf9a9104806fc38746` ready；线上验证全绿（启动脚本 / theme-color / touch-action / overscroll / nav-active / dvh / sw 缓存名 / manifest shortcuts 字节流核验 / 图标 200）。
+- **GitHub 同步**：sw.js+constants.ts+manifest（`b2f132f`）、index.html（`5c855cb`）、navigation.ts+theme.ts+main.ts（`6ef1a30`）、constants.ts 文本对齐修正（`1f25668`/`9859e9f`）、CHANGELOG 精要条目（本提交）；`css/style.css` 约 32KB 超单次推送上限，不入 GitHub，以本地为准。
+
+---
+
 ## v4.4.0（2026-08-31）布局风格优化：悬浮胶囊标签栏 + 三槽顶栏 + 2×2 彩色瓦片
 
 > 版本说明：**次版本号 +1**（纯视觉/布局层改造，参考 iOS 记账应用截图的布局与风格；功能 / 数据 / 架构零变化）。
@@ -28,7 +42,7 @@
 - **iOS 组件语言**：胶囊按钮 + 品牌紫辉光、iOS 搜索栏、UISegmentedControl 式知识库双标签、胶囊 chips、Sheet 弹窗（grabber 条 + 24px 圆角）、发丝线分隔统计栅格、iOS 标签栏（毛玻璃 + 选中图标半透明填充）；暗色纯黑 + #2C2C2E 玻璃卡。
 - **安全区适配**：`viewport-fit=cover`；顶栏/底栏/弹窗/页底留白含 `env(safe-area-inset-*)`（毛玻璃延伸状态栏、避开 Home 指示条）；新增 `apple-mobile-web-app-title`。
 - **版本**：APP_VERSION v4.2.1→v4.3.0，sw 缓存 `kaoyan-v4.3.0`。
-- **验证**：build（含 tsc）通过（产物 `index-gUzZTJQJ.js` 591.86 kB / `index-Cj3kV0Tn.css` 62.47 kB）；iPhone 视口（390×844）截图核验明/暗双主题玻璃渲染正确。
+- **验证**：build（含 tsc）通过（产物 `index-gUzZTJQ3.js` 591.86 kB / `index-Cj3kV0Tn.css` 62.47 kB）；iPhone 视口（390×844）截图核验明/暗双主题玻璃渲染正确。
 - **部署**：`dist-deploy.zip`（70 文件，1,091,782 B）发布到 `llss.netlify.app`，deploy `6a956d2769b077bdeb269f88` ready；线上验证全绿（新 bundle/CSS、viewport-fit、sw 缓存名、图标 200）。
 - **GitHub 同步**：sw.js+constants.ts（`c06d195`）、index.html（`c4efd71`）；`css/style.css` 约 30KB 超单次推送上限，不入 GitHub，以本地为准。
 

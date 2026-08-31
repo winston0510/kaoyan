@@ -17,7 +17,7 @@
 - **版本**：APP_VERSION v4.5.2→v4.5.3，sw 缓存 `kaoyan-v4.5.3`。
 - **验证**：build（含 tsc）通过（产物 `index-BmjNO3vV.js` 592.80 kB / `index-B5sdtsNa.css` 64.93 kB）；线上轮询 poll 1 即 ready，全绿（新 bundle/CSS、sw 缓存名、bundle 含 v4.5.3、meta_before_script=True）。
 - **部署**：`dist-deploy.zip`（70 文件，1,092,947 B）发布到 `llss.netlify.app`，deploy `6a95a221dc2a2ce2e232554f` ready；Supabase 导入 225 块全绿（`OK=225 Failed=0`），DB 总量 **11,118**（政治 6,618 / 数学二 1,837 / 电路 1,509 / 英语二 1,154），新增 903 题线上即刻可用；PAT 留存仓库外 `.local`，后续导入不再索取。
-- **GitHub 同步**：sw.js+constants.ts（`67c878c`）、integrate_all.py（`9e51f12`）、CHANGELOG 精要条目（`3f8f873` 与本提交）；种子 SQL（各 90-100 KB）超单次推送上限不入 GitHub，以本地为准。
+- **GitHub 同步**：sw.js+constants.ts（`67c878c`）、integrate_all.py（`9e51f12`）、CHANGELOG 精要条目（`3f8f873`/`c409354` 与本提交）；种子 SQL（各 90-100 KB）超单次推送上限不入 GitHub，以本地为准。
 
 ---
 

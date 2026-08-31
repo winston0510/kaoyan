@@ -6,7 +6,7 @@ function applyTheme(theme: 'dark' | 'light'): void {
   const btn = document.getElementById('themeToggle');
   if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
   const tc = document.querySelector('meta[name="theme-color"]');
-  if (tc) tc.setAttribute('content', theme === 'dark' ? '#000000' : '#F2F2F7');
+  if (tc) tc.setAttribute('content', theme === 'dark' ? '#000000' : '#FFFFFF');
   const sb = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
   if (sb) sb.setAttribute('content', theme === 'dark' ? 'black-translucent' : 'default');
 }

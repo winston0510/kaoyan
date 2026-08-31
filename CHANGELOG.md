@@ -11,12 +11,13 @@
 > 版本说明：**次版本号 +1**（题库数据大增量，沿袭 v4.2.0「题库大增量 = 次版本 +1」先例；功能 / 架构 / UI 零变化）。
 - **电路强化题库**（新增 `gen_circuit_adv.js`，8 模块）：覆盖 10 个规范章节（电路定理 / 正弦稳态 / 动态电路 / 耦合电感与变压器 / 三相 / 二端口 / 复频域 / 图论矩阵 / 非线性 / 综合），产出 424 题（去重后 410）；**数学二强化题库**（新增 `gen_math2_adv.js`，12 模块）：覆盖高数 6 章 + 线代 6 章 + 综合，产出 508 题（去重后 493）。全部为参数化精确答案计算题（干扰项全参数域防碰撞）+ 干净概念题 + 两选项判断题（`mkj`）。
 - **质量修复**（电路生成器）：判断题选项被随机数补位污染 → 新增判断题两选项助手 `mkj`（8 处）；无功功率数学错误（cosφ=0.6 时 Q=S×0.8，原误 0.6）；概念题数组型垃圾选项 22 处 → 直白字符串数组；耦合系数 k 干扰项防碰撞。
+- **历史真题库 JSON 转义缺陷修复**：3 行真题/名师题选项内 LaTeX 单反斜杠非法（导入 22P02）→ `_fix_json_escape.py` 定向加倍，`_scan_json.py` 全库扫描 BAD 0。
 - **集成**：`integrate_all.py` 注册 `seed_adv_circuit.sql` / `seed_adv_math2.sql`（9 字段行内带 source）；`seed_all_final.sql` 重生成：总题量 10,215 → **11,118**（+903）；电路 1,099 → 1,509；数学二 1,344 → 1,837。
 - **质量工具**：`_check_seed.cjs`（SQL 行级校验：电路 ROWS 424 BAD 0、数学二 ROWS 508 BAD 0）、`_scan_concepts.cjs`（生成器结构校验 TOTAL_BAD 0）。
 - **版本**：APP_VERSION v4.5.2→v4.5.3，sw 缓存 `kaoyan-v4.5.3`。
 - **验证**：build（含 tsc）通过（产物 `index-BmjNO3vV.js` 592.80 kB / `index-B5sdtsNa.css` 64.93 kB）；线上轮询 poll 1 即 ready，全绿（新 bundle/CSS、sw 缓存名、bundle 含 v4.5.3、meta_before_script=True）。
-- **部署**：`dist-deploy.zip`（70 文件，1,092,947 B）发布到 `llss.netlify.app`，deploy `6a95a221dc2a2ce2e232554f` ready；Supabase 导入待 `SUPABASE_PAT`（`seed_all_final.sql` 5.35 MB 就绪，导入前线上沿用旧库 10,215 题）。
-- **GitHub 同步**：sw.js+constants.ts（`67c878c`）、integrate_all.py（`9e51f12`）、CHANGELOG 精要条目（本提交）；种子 SQL（各 90-100 KB）超单次推送上限不入 GitHub，以本地为准。
+- **部署**：`dist-deploy.zip`（70 文件，1,092,947 B）发布到 `llss.netlify.app`，deploy `6a95a221dc2a2ce2e232554f` ready；Supabase 导入 225 块全绿（`OK=225 Failed=0`），DB 总量 **11,118**（政治 6,618 / 数学二 1,837 / 电路 1,509 / 英语二 1,154），新增 903 题线上即刻可用；PAT 留存仓库外 `.local`，后续导入不再索取。
+- **GitHub 同步**：sw.js+constants.ts（`67c878c`）、integrate_all.py（`9e51f12`）、CHANGELOG 精要条目（`3f8f873` 与本提交）；种子 SQL（各 90-100 KB）超单次推送上限不入 GitHub，以本地为准。
 
 ---
 
@@ -70,16 +71,3 @@
 - **验证**：build（含 tsc）通过（产物 `index-DSgPFxJG.js` 592.17 kB / `index-Dr9jaTsG.css` 64.39 kB）；iPhone 视口（390×844）截图 3 张目检悬浮胶囊标签栏/圆形按钮/彩色瓦片/chips 符合参考风格。
 - **部署**：`dist-deploy.zip`（70 文件，1,092,372 B）发布到 `llss.netlify.app`，deploy `6a9572f2b8459da15276d3ba` ready；线上验证全绿（新 bundle/CSS、tb-btn/homeSub/block-head/tile 令牌、sw 缓存名、图标 200）。
 - **GitHub 同步**：sw.js+constants.ts（`e01712c`）、index.html（`20c55cb`）、home.ts+stats.ts（`9ea25a0`）、CHANGELOG 精要条目（本提交）；`css/style.css` 约 31KB 超单次推送上限，不入 GitHub，以本地为准。
-
----
-
-## v4.3.0（2026-08-31）全站 UI iOS 化：玻璃拟态设计系统 + iOS 安全区适配
-
-> 版本说明：**次版本号 +1**（纯视觉层整体改造，功能 / 数据 / 架构零变化）。
-- **新增玻璃拟态设计系统**（`css/style.css` 全量重写，类名全保留、TS 零改动）：半透明玻璃令牌 + `blur(24px) saturate(180%)` 毛玻璃、环境渐变背景（品牌紫/天蓝/粉三层 radial-gradient）、iOS 系统色板（#34C759/#FF3B30/#FF9500）与分组背景 #F2F2F7、SF Pro 系统字体栈。
-- **iOS 组件语言**：胶囊按钮 + 品牌紫辉光、iOS 搜索栏、UISegmentedControl 式知识库双标签、胶囊 chips、Sheet 弹窗（grabber 条 + 24px 圆角）、发丝线分隔统计栅格、iOS 标签栏（毛玻璃 + 选中图标半透明填充）；暗色纯黑 + #2C2C2E 玻璃卡。
-- **安全区适配**：`viewport-fit=cover`；顶栏/底栏/弹窗/页底留白含 `env(safe-area-inset-*)`（毛玻璃延伸状态栏、避开 Home 指示条）；新增 `apple-mobile-web-app-title`。
-- **版本**：APP_VERSION v4.2.1→v4.3.0，sw 缓存 `kaoyan-v4.3.0`。
-- **验证**：build（含 tsc）通过（产物 `index-gUzZTJQJ.js` 591.86 kB / `index-Cj3kV0Tn.css` 62.47 kB）；iPhone 视口（390×844）截图核验明/暗双主题玻璃渲染正确。
-- **部署**：`dist-deploy.zip`（70 文件，1,091,782 B）发布到 `llss.netlify.app`，deploy `6a956d2769b077bdeb269f88` ready；线上验证全绿（新 bundle/CSS、viewport-fit、sw 缓存名、图标 200）。
-- **GitHub 同步**：sw.js+constants.ts（`c06d195`）、index.html（`c4efd71`）；`css/style.css` 约 30KB 超单次推送上限，不入 GitHub，以本地为准。

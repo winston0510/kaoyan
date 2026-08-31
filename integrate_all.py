@@ -281,6 +281,9 @@ parse_pg_sql(os.path.join(BASE, 'seed_real_english_cloze.sql'), '', inline_sourc
 parse_pg_sql(os.path.join(BASE, 'seed_real_english_reading.sql'), '', inline_source=True)
 parse_pg_sql(os.path.join(BASE, 'seed_real_teacher.sql'), '', inline_source=True)
 
+parse_pg_sql(os.path.join(BASE, 'seed_adv_circuit.sql'), '', inline_source=True)
+parse_pg_sql(os.path.join(BASE, 'seed_adv_math2.sql'), '', inline_source=True)
+
 # Quark network disk files
 parse_kyzz_sql(os.path.join(PARENT, 'kyzz_question.sql'))
 parse_maogai_json(os.path.join(PARENT, 'maogai_all.json'))
@@ -296,8 +299,8 @@ for subj in ['math2', 'circuit', 'english2', 'politics']:
     print(f"  {subj}: 输入{s['total']} -> 去重后{unique} (移除{s['dup']}重复, 来源增强{s['enriched']})")
 
 print(f"\n总输入: {total_in}")
-print(f"总去重后: {len(questions)}")
-print(f"移除重复: {total_dup}")
+print(f"\n总去重后: {len(questions)}")
+print(f"\n移除重复: {total_dup}")
 
 subj_counts = Counter(q['subject'] for q in questions)
 source_counts = Counter(q['source'] for q in questions)

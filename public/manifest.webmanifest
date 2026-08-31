@@ -7,7 +7,7 @@
   "scope": "/",
   "display": "standalone",
   "background_color": "#F2F2F7",
-  "theme_color": "#4B3FE3",
+  "theme_color": "#FFFFFF",
   "shortcuts": [
     { "name": "继续刷题", "url": "/#home" },
     { "name": "学习统计", "url": "/#stats" }

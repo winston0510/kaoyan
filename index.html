@@ -26,9 +26,9 @@
   <!-- ====== HOME PAGE ====== -->
   <div class="page active" id="page-home">
     <div class="topbar">
-      <span class="topbar-title">考研刷题</span>
-      <span class="topbar-action" onclick="switchPage('admin')">管理</span>
-      <span class="topbar-action" id="themeToggle" onclick="toggleTheme()">🌙</span>
+      <div class="tb-left"><button class="tb-btn" id="themeToggle" onclick="toggleTheme()">🌙</button></div>
+      <div class="tb-center"><div class="topbar-title">考研刷题</div><div class="topbar-sub" id="homeSub"></div></div>
+      <div class="tb-right"><button class="tb-btn" onclick="switchPage('admin')">⚙️</button></div>
     </div>
     <div class="today-stats" id="todayStats">
       <div class="today-stat"><div class="num" id="todayTotal">0</div><div class="lbl">今日刷题</div></div>
@@ -47,9 +47,9 @@
   <!-- ====== SUBJECT PAGE (章节刷题, v3.9.0) ====== -->
   <div class="page" id="page-subject">
     <div class="topbar">
-      <span class="topbar-back" onclick="switchPage('home')">← 返回</span>
-      <span class="topbar-title" id="subjectTitle">科目</span>
-      <span class="topbar-action" style="visibility:hidden">·</span>
+      <div class="tb-left"><button class="tb-btn" onclick="switchPage('home')">←</button></div>
+      <div class="tb-center"><div class="topbar-title" id="subjectTitle">科目</div></div>
+      <div class="tb-right"></div>
     </div>
     <div id="subjectContent"></div>
   </div>
@@ -57,9 +57,9 @@
   <!-- ====== QUIZ PAGE ====== -->
   <div class="page" id="page-quiz">
     <div class="topbar">
-      <span class="topbar-back" onclick="quitQuiz()">← 返回</span>
-      <span class="topbar-title" id="quizTitle">刷题中</span>
-      <span class="topbar-action" id="quizProgress">0/0</span>
+      <div class="tb-left"><button class="tb-btn" onclick="quitQuiz()">←</button></div>
+      <div class="tb-center"><div class="topbar-title" id="quizTitle">刷题中</div></div>
+      <div class="tb-right"><span class="tb-btn tb-text" id="quizProgress">0/0</span></div>
     </div>
     <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div></div>
     <div id="quizContent"></div>
@@ -68,8 +68,9 @@
   <!-- ====== FAVORITES PAGE ====== -->
   <div class="page" id="page-favorites">
     <div class="topbar">
-      <span class="topbar-title">我的收藏</span>
-      <span class="topbar-action" onclick="startFavQuiz()">开始作答</span>
+      <div class="tb-left"></div>
+      <div class="tb-center"><div class="topbar-title">我的收藏</div></div>
+      <div class="tb-right"><button class="tb-btn tb-text" onclick="startFavQuiz()">开始作答</button></div>
     </div>
     <div class="filter-row" id="favFilter"></div>
     <div id="favList"></div>
@@ -80,7 +81,11 @@
 
   <!-- ====== WRONG BOOK PAGE ====== -->
   <div class="page" id="page-wrongbook">
-    <div class="topbar"><span class="topbar-title">错题本</span></div>
+    <div class="topbar">
+      <div class="tb-left"></div>
+      <div class="tb-center"><div class="topbar-title">错题本</div></div>
+      <div class="tb-right"></div>
+    </div>
     <div class="filter-row" id="wrongFilter"></div>
     <div id="wrongList"></div>
     <div class="empty-state" id="wrongEmpty" style="display:none">
@@ -90,20 +95,24 @@
 
   <!-- ====== STATS PAGE ====== -->
   <div class="page" id="page-stats">
-    <div class="topbar"><span class="topbar-title">学习统计</span></div>
+    <div class="topbar">
+      <div class="tb-left"></div>
+      <div class="tb-center"><div class="topbar-title">学习统计</div></div>
+      <div class="tb-right"></div>
+    </div>
     <div class="stats-overview" id="statsOverview"></div>
-    <div style="padding:0 16px;margin-top:20px"><h3 style="font-size:.9375rem;font-weight:700;margin-bottom:12px">本周趋势</h3></div>
+    <div class="block-head"><h3 class="block-title">本周趋势</h3><span class="h-chip" id="weekChip"></span></div>
     <div class="week-chart" id="weekChart"></div>
-    <div style="padding:0 16px;margin-top:20px"><h3 style="font-size:.9375rem;font-weight:700;margin-bottom:12px">各科目</h3></div>
+    <div class="block-head"><h3 class="block-title">各科目</h3><span class="h-chip" id="subjectChip"></span></div>
     <div id="subjectStats"></div>
   </div>
 
   <!-- ====== KNOWLEDGE PAGE (v4.0.0) ====== -->
   <div class="page" id="page-knowledge">
     <div class="topbar">
-      <span class="topbar-back" id="knowledgeTopBack" style="visibility:hidden">← 返回</span>
-      <span class="topbar-title" id="knowledgeTopTitle">知识库</span>
-      <span class="topbar-action" onclick="switchPage('admin')">管理</span>
+      <div class="tb-left"><button class="tb-btn" id="knowledgeTopBack" style="visibility:hidden">←</button></div>
+      <div class="tb-center"><div class="topbar-title" id="knowledgeTopTitle">知识库</div></div>
+      <div class="tb-right"><button class="tb-btn" onclick="switchPage('admin')">⚙️</button></div>
     </div>
     <div id="knowledgeContent"></div>
   </div>
@@ -111,8 +120,9 @@
   <!-- ====== ADMIN PAGE ====== -->
   <div class="page" id="page-admin">
     <div class="topbar">
-      <span class="topbar-back" onclick="switchPage('home')">← 返回</span>
-      <span class="topbar-title">题库管理</span>
+      <div class="tb-left"><button class="tb-btn" onclick="switchPage('home')">←</button></div>
+      <div class="tb-center"><div class="topbar-title">题库管理</div></div>
+      <div class="tb-right"></div>
     </div>
     <div class="card">
       <h3 style="font-size:.9375rem;font-weight:700;margin-bottom:12px">Supabase 连接设置</h3>

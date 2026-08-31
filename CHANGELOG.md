@@ -6,6 +6,20 @@
 
 ---
 
+## v4.5.3（2026-08-31）题库大增量：电路 +410 / 数学二 +493（总量 10,215 → 11,118）
+
+> 版本说明：**次版本号 +1**（题库数据大增量，沿袭 v4.2.0「题库大增量 = 次版本 +1」先例；功能 / 架构 / UI 零变化）。
+- **电路强化题库**（新增 `gen_circuit_adv.js`，8 模块）：覆盖 10 个规范章节（电路定理 / 正弦稳态 / 动态电路 / 耦合电感与变压器 / 三相 / 二端口 / 复频域 / 图论矩阵 / 非线性 / 综合），产出 424 题（去重后 410）；**数学二强化题库**（新增 `gen_math2_adv.js`，12 模块）：覆盖高数 6 章 + 线代 6 章 + 综合，产出 508 题（去重后 493）。全部为参数化精确答案计算题（干扰项全参数域防碰撞）+ 干净概念题 + 两选项判断题（`mkj`）。
+- **质量修复**（电路生成器）：判断题选项被随机数补位污染 → 新增判断题两选项助手 `mkj`（8 处）；无功功率数学错误（cosφ=0.6 时 Q=S×0.8，原误 0.6）；概念题数组型垃圾选项 22 处 → 直白字符串数组；耦合系数 k 干扰项防碰撞。
+- **集成**：`integrate_all.py` 注册 `seed_adv_circuit.sql` / `seed_adv_math2.sql`（9 字段行内带 source）；`seed_all_final.sql` 重生成：总题量 10,215 → **11,118**（+903）；电路 1,099 → 1,509；数学二 1,344 → 1,837。
+- **质量工具**：`_check_seed.cjs`（SQL 行级校验：电路 ROWS 424 BAD 0、数学二 ROWS 508 BAD 0）、`_scan_concepts.cjs`（生成器结构校验 TOTAL_BAD 0）。
+- **版本**：APP_VERSION v4.5.2→v4.5.3，sw 缓存 `kaoyan-v4.5.3`。
+- **验证**：build（含 tsc）通过（产物 `index-BmjNO3vV.js` 592.80 kB / `index-B5sdtsNa.css` 64.93 kB）；线上轮询 poll 1 即 ready，全绿（新 bundle/CSS、sw 缓存名、bundle 含 v4.5.3、meta_before_script=True）。
+- **部署**：`dist-deploy.zip`（70 文件，1,092,947 B）发布到 `llss.netlify.app`，deploy `6a95a221dc2a2ce2e232554f` ready；Supabase 导入待 `SUPABASE_PAT`（`seed_all_final.sql` 5.35 MB 就绪，导入前线上沿用旧库 10,215 题）。
+- **GitHub 同步**：sw.js+constants.ts（`67c878c`）、integrate_all.py（`9e51f12`）、CHANGELOG 精要条目（本提交）；种子 SQL（各 90-100 KB）超单次推送上限不入 GitHub，以本地为准。
+
+---
+
 ## v4.5.2（2026-08-31）修复暗模式状态栏仍白（启动期 meta 写入 null 缺陷）
 
 > 版本说明：**次版本号 +1**（小修复：启动期 meta 同步脚本顺序缺陷，功能 / 数据 / 架构零变化）。

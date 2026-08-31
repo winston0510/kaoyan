@@ -57,6 +57,8 @@ const windowApi: Record<string, unknown> = {
 };
 Object.assign(window, windowApi);
 
+document.addEventListener('gesturestart', e => e.preventDefault());
+
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   registerSW();
@@ -64,6 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
   void syncQuestionsFromDB();
   void pullFromDB();
   renderHome();
+
+  const hash = location.hash.replace('#', '');
+  if (['knowledge', 'favorites', 'wrongbook', 'stats', 'admin'].includes(hash)) switchPage(hash);
 
   const url = localStorage.getItem('supabase_url');
   const key = localStorage.getItem('supabase_key');

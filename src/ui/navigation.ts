@@ -1,6 +1,11 @@
 import { db } from '../state';
 
+const TAB_PAGES = ['home', 'knowledge', 'favorites', 'wrongbook', 'stats'];
+const scrollMem: Record<string, number> = {};
+let currentPage = 'home';
+
 export function switchPage(page: string): void {
+  if (page !== currentPage) scrollMem[currentPage] = window.scrollY;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const target = document.getElementById('page-' + page);
   if (target) target.classList.add('active');
@@ -9,6 +14,9 @@ export function switchPage(page: string): void {
   if (nav) nav.classList.add('active');
   const bottomNav = document.getElementById('bottomNav');
   if (bottomNav) bottomNav.style.display = (page === 'quiz' || page === 'admin' || page === 'subject') ? 'none' : '';
+  if (TAB_PAGES.includes(page)) window.scrollTo(0, scrollMem[page] || 0);
+  else window.scrollTo(0, 0);
+  currentPage = page;
 
   const w = window as unknown as Record<string, () => void>;
   if (page === 'home') w.renderHome?.();

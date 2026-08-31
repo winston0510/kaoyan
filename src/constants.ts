@@ -1,6 +1,6 @@
 import type { QuestionType, SectionDef, SubjectDef } from './types';
 
-export const APP_VERSION = 'v4.4.0';
+export const APP_VERSION = 'v4.5.0';
 
 export const TYPE_LABELS: Record<QuestionType, string> = {
   single: '单选题',
@@ -51,7 +51,8 @@ export const SUBJECTS: SubjectDef[] = [
         '第11章 “四个全面”战略布局',
         '第12章 全面推进国防和军队现代化',
         '第13章 中国特色大国外交',
-        '第14章 坚持“一国两制”和推进祖国完全统一'
+        '第14章 坚持“一国两制”和推进祖国完全统一',
+        '第15章 坚持“一国两制”和推进祖国完全统一'
       ]
     },
     {

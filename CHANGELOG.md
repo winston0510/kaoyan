@@ -1,7 +1,7 @@
 # 修改日志 (CHANGELOG)
 
 > 版本规则：**大改动**（新增功能、架构变更）→ 主版本号 +1；**小改动**（Bug 修复、细节优化）→ 次版本号 +1。
-> 版本号常量位于 `src/constants.ts`（v3.0.0 前位于 `index.html` 顶部），管理页底部实时显示。
+> 版本号常量位于 `src/constants.ts`(v3.0.0 前位于 `index.html` 顶部），管理页底部实时显示。
 > 注：GitHub 端副本受 MCP 单次推送体量限制为精要版；v4.2.0 及更早版本记录见 `CHANGELOG-archive.md`；完整权威记录以仓库本地 `CHANGELOG.md` 与各 `*.changelog.log` 为准。
 
 ---
@@ -16,7 +16,7 @@
 - **版本**：APP_VERSION v4.4.0→v4.5.0，sw 缓存 `kaoyan-v4.5.0`。
 - **验证**：build（含 tsc）通过（产物 `index-C6YBzUVM.js` 592.80 kB / `index-BKm-ISLC.css` 64.88 kB）；meta 同步端到端（实点 `#themeToggle`：亮 #F2F2F7/default → 暗 #000000/black-translucent）；iPhone 视口截图 3 张目检暗色全黑无白条。
 - **部署**：`dist-deploy.zip`（70 文件，1,092,948 B）发布到 `llss.netlify.app`，deploy `6a957aaf9a9104806fc38746` ready；线上验证全绿（启动脚本 / theme-color / touch-action / overscroll / nav-active / dvh / sw 缓存名 / manifest shortcuts 字节流核验 / 图标 200）。
-- **GitHub 同步**：sw.js+constants.ts+manifest（`b2f132f`）、index.html（`5c855cb`）、navigation.ts+theme.ts+main.ts（`6ef1a30`）、constants.ts 文本对齐修正（`1f25668`/`9859e9f`）、CHANGELOG 精要条目（本提交）；`css/style.css` 约 32KB 超单次推送上限，不入 GitHub，以本地为准。
+- **GitHub 同步**：sw.js+constants.ts+manifest（`b2f132f`）、index.html（`5c855cb`）、navigation.ts+theme.ts+main.ts（`6ef1a30`）、constants.ts 文本对齐修正（`1f25668`/`9859e9f`）、CHANGELOG 精要条目（`e61b2de` + 本提交）；`css/style.css` 约 32KB 超单次推送上限，不入 GitHub，以本地为准。
 
 ---
 
@@ -42,7 +42,7 @@
 - **iOS 组件语言**：胶囊按钮 + 品牌紫辉光、iOS 搜索栏、UISegmentedControl 式知识库双标签、胶囊 chips、Sheet 弹窗（grabber 条 + 24px 圆角）、发丝线分隔统计栅格、iOS 标签栏（毛玻璃 + 选中图标半透明填充）；暗色纯黑 + #2C2C2E 玻璃卡。
 - **安全区适配**：`viewport-fit=cover`；顶栏/底栏/弹窗/页底留白含 `env(safe-area-inset-*)`（毛玻璃延伸状态栏、避开 Home 指示条）；新增 `apple-mobile-web-app-title`。
 - **版本**：APP_VERSION v4.2.1→v4.3.0，sw 缓存 `kaoyan-v4.3.0`。
-- **验证**：build（含 tsc）通过（产物 `index-gUzZTJQ3.js` 591.86 kB / `index-Cj3kV0Tn.css` 62.47 kB）；iPhone 视口（390×844）截图核验明/暗双主题玻璃渲染正确。
+- **验证**：build（含 tsc）通过（产物 `index-gUzZTJQJ.js` 591.86 kB / `index-Cj3kV0Tn.css` 62.47 kB）；iPhone 视口（390×844）截图核验明/暗双主题玻璃渲染正确。
 - **部署**：`dist-deploy.zip`（70 文件，1,091,782 B）发布到 `llss.netlify.app`，deploy `6a956d2769b077bdeb269f88` ready；线上验证全绿（新 bundle/CSS、viewport-fit、sw 缓存名、图标 200）。
 - **GitHub 同步**：sw.js+constants.ts（`c06d195`）、index.html（`c4efd71`）；`css/style.css` 约 30KB 超单次推送上限，不入 GitHub，以本地为准。
 

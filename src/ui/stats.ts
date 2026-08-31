@@ -31,18 +31,24 @@ export function renderStats(): void {
   `;
 
   let weekHtml = '';
+  let weekTotal = 0;
   const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
   const now = new Date();
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
     const ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     const stat = dayMap[ds] || { total: 0, correct: 0 };
+    weekTotal += stat.total;
     const acc = stat.total > 0 ? Math.round(stat.correct / stat.total * 100) : 0;
     const color = acc >= 60 ? 'var(--success)' : (acc >= 30 ? 'var(--warning)' : 'var(--danger)');
     weekHtml += `<div class="week-day"><div class="bar-wrap"><div class="bar" style="height:${Math.max(2, stat.total * 4)}px;background:${color}"></div></div><div class="day-name">${dayNames[d.getDay()]}</div><div class="day-num">${stat.total}</div></div>`;
   }
   const weekEl = document.getElementById('weekChart');
   if (weekEl) weekEl.innerHTML = weekHtml;
+  const weekChip = document.getElementById('weekChip');
+  if (weekChip) weekChip.textContent = '本周 ' + weekTotal + ' 题';
+  const subjectChip = document.getElementById('subjectChip');
+  if (subjectChip) subjectChip.textContent = '共 ' + SUBJECTS.length + ' 科';
 
   const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []);
   const subjectHtml = SUBJECTS.map(s => {

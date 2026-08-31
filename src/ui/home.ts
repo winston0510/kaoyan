@@ -14,6 +14,11 @@ export function renderHome(): void {
   if (el3) el3.textContent = tToday.total > 0 ? Math.round(tToday.correct / tToday.total * 100) + '%' : '-';
   const el4 = document.getElementById('todayStreak');
   if (el4) el4.textContent = String(calcStreak(studyDays()));
+  const sub = document.getElementById('homeSub');
+  if (sub) {
+    const n = new Date();
+    sub.textContent = (n.getMonth() + 1) + '月' + n.getDate() + '日';
+  }
 
   const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []);
   const html = SUBJECTS.map(s => {

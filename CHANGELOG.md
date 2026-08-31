@@ -33,7 +33,7 @@
 - **线上部署完成（2026-08-31）**：`dist-deploy.zip`（66 文件，正斜杠路径，1,068,038 B）经 Netlify Deploy API（`POST /api/v1/sites/38b9bbf0-39f6-4610-a09a-79be94755f17/deploys`）发布到 `llss.netlify.app`，deploy `6a954e38b54da3e914aa8e52` 状态 ready（published 2026-08-31T09:49:45Z，error 空）。
 - **线上验证全绿**：`sw.js` 返回 `kaoyan-v4.2.0`、首页引用 `assets/index-BQXjHljX.js` + `assets/index-D9c1O0fW.css`（v4.2.0 bundle）、JS 包 200（591,858 B）、`manifest.webmanifest` 200。
 - **数据说明**：363 题存于 `seed_all_final.sql`（10,215 题），按既有流程由用户在 Supabase 侧导入后即在 App 内生效；本次前端部署不携带数据库变更。
-- **GitHub 仓库同步（2026-08-31）**：`src/constants.ts`、`public/sw.js`、`integrate_all.py`（新增，题库集成管线）与本文档（完整 509 行）经 MCP `push_files` 推送至 `winston0510/kaoyan` main（integrate_all.py commit `225efa8`）。
+- **GitHub 仓库同步（2026-08-31）**：`src/constants.ts`、`public/sw.js`、`integrate_all.py`（新增，题库集成管线）与本文档（完整 510 行）经 MCP `push_files` 推送至 `winston0510/kaoyan` main（integrate_all.py commit `225efa8`）。
 
 ---
 
@@ -59,3 +59,47 @@
 - **线上验证全绿**：首页加载 `assets/index-DjSzWQhK.js` + `assets/index-D9c1O0fW.css`（v4.1.1 bundle）、`sw.js` 返回 `kaoyan-v4.1.1`、manifest「考研刷题」、静态资源全部 200；浏览器 UI——科目 政治 48 / 英语二 6 / 数学二 14 / 电路 15 章节、知识库 3 主题（数学二 40 公式 48 卡 / 电路 31 公式 28 卡 / 英语二 58 知识点 29 卡，共 105 张卡片）渲染正常、版本显示 v4.1.1、console 无 JS 错误。
 - **GitHub 仓库同步**：完整项目推送至 `winston0510/kaoyan` main（项目 commit `dae13b0b`）；补记本文档部署章节后二次同步修复线上一处同步截断（commit `413cde1f`），经 GitHub API 读取核对与本地 **477 行完全一致**（含 v1.0.0 / v2.0.0 / v2.1.0 / v4.1.1 全部章节）。
 - **Netlify PAT 安全处置**：有效令牌（`nfp_…`）保存至本地 `.local/netlify_token.txt` 不入库，后续部署自动读取、不再重复索要（用户要求）。
+
+---
+
+## v4.1.0（2026-08-30）知识库新增「电路」「英语二」两大主题 + 记忆卡片样式美化
+
+> 版本说明：**次版本号 +1**（小改动：知识库内容增量扩展 + 样式优化，无架构变化）。
+
+### 新增
+- **「考研电路」知识库主题**（`circuit-knowledge`，⚡ #F39C12）：2 大板块 9 节 **31 个条目**——电路基础（基尔霍夫定律、电阻串并联与分压分流、等效变换、叠加定理、戴维南/诺顿定理、最大功率传输）与动态交流电路（一阶动态电路、RLC 谐振、正弦稳态功率、耦合电感与理想变压器、三相电路、二端口网络、复频域分析）、**8 条高频提示**、**6 组 28 张记忆卡片**。
+- **「考研英语二」知识库主题**（`english2-knowledge`，🔤 #3498DB）：6 大板块 16 节 **58 个条目**——核心词汇（高频动词/形容词/名词，含近反义词）、语法（核心时态、介词搭配、常考连词）、完形填空（逻辑连接词、语境词汇）、阅读理解（题型技巧、高频主题词）、翻译（英译中 / 中译英高频表达）、写作（书信格式、常用表达、易错点、文章结构）、**10 条高频提示**、**6 组 29 张记忆卡片**。
+
+### 变更
+- **`src/data/knowledge-data.ts`**：`KNOWLEDGE_TOPICS` 由 1 个主题扩为 **3 个**（数学二 + 电路 + 英语二），两个新主题均使用对象字面量（`P1/P2` 工厂函数名称硬编码高等数学/线性代数，不可复用），分隔复用 `sec()/item()` 工厂函数；总条目 40+31+58=**129 项**、tips 28 条、记忆卡片 48+28+29=**105 张**。
+- **记忆卡片样式美化**（`css/style.css` 知识库 `kt-flash` 区域）：卡片翻转动效增强（3D 透视 + 背料渐变）、「点击翻面」胶囊徽标、hover 浮起阴影、`prefers-reduced-motion` 降级为淡入无翻转，暗色模式同步适配。
+- **APP_VERSION v4.0.0 → v4.1.0**（`src/constants.ts`）。
+- `public/sw.js` 缓存名同步 `kaoyan-v4.1.0`。
+
+### 验证
+- 通过：`npm run typecheck`（退出码 0）、`npm run test`（34/34 通过）、`npm run build`（Vite 构建成功）。
+- 通过：Playwright + 系统 Chrome 冒烟验证——列表页 hero「3 个主题 · 105 张记忆卡片」、三张主题卡（考研数学二 40 条 / 考研电路 31 条 / 考研英语二 58 条）、三主题详情页（数学 15 节 48 卡 / 电路 9 节 28 卡 / 英语 17 节 29 卡）、全部 105 张 3D 翻卡可翻面、版本显示「当前版本 v4.1.0」，全程无 JS 报错 / 404。
+
+---
+
+## v4.0.0（2026-08-30）新增「知识库」功能模块：数学二公式速查 + 记忆卡片
+
+> 版本说明：**主版本号 +1**（大改动：新增功能模块——通用知识库页面、底部导航第 5 项、独立数据源与 UI 模块，后续可扩展其他科目知识点）。
+
+### 新增
+- **通用知识库页面**：底部导航新增第 5 项「知识库」（首页右侧），`index.html` 新增 `#page-knowledge`；列表页含 hero 区 + 主题卡片（图标 / 公式数 / 卡片数），支持多主题扩展。
+- **`src/data/knowledge-data.ts`**：独立通用知识数据源。定义 `KnowledgeTopic / KnowledgePart / KnowledgeSection / KnowledgeItem / FlashCardGroup` 接口 + `P1 / P2 / sec / item` 工厂函数，主题结构（`parts` 公式分区 + `tips` 高频提示 + `cardGroups` 记忆卡片）可直接复用新增科目。首个主题 `math2-knowledge`：高等数学 9 节 + 线性代数 6 节共 **40 条公式**（每条含多条子公式，覆盖 93 项公式要点）、10 条高频考点易错提醒、**48 张记忆卡片**（10 组）。
+- **`src/ui/knowledge.ts`**：主题详情页含横幅 + 「公式速查 / 记忆卡片」双标签；公式按「分部 → 章节」折叠卡片展示（LaTeX 经 `formatMath` 渲染为 KaTeX），每节可点击折叠；记忆卡片为 **3D 翻牌自测**（点击翻面看答案）。
+- **KaTeX 兼容处理**：源文档 `\xlongequal` 宏（KaTeX 不支持的 extpfeil）替换为 `\xrightarrow{\ \frac{0}{0}\ \text{或}\ \frac{\infty}{\infty}\ }`；多公式 content 以 `\n` 连接、渲染时转为 `<br>` 保留换行。
+
+### 变更
+- **`index.html`**：新增 `#page-knowledge` 区块 + 底部导航第 5 项（`data-page="knowledge"`，`switchPage('knowledge')`）。
+- **`src/ui/navigation.ts`**：`switchPage` 新增 `page === 'knowledge'` 分支调用 `renderKnowledge()`。
+- **`src/main.ts`**：导入并暴露 6 个全局函数至 `windowApi`：`renderKnowledge / openKnowledgeTopic / backFromKnowledge / switchKnowledgeTab / toggleKnowledgeSection / flipCard`。
+- **APP_VERSION v3.11.1 → v4.0.0**（`src/constants.ts`，大改动 → 主版本号 +1）。
+- `public/sw.js` 缓存名同步 `kaoyan-v4.0.0`。
+- `css/style.css` 新增知识库整套样式（`kt-hero / kt-topic-card / kt-section 折叠 / kt-flash 3D 翻卡 / kt-tips` 等，全部基于既有 CSS 变量适配深色模式）。
+
+### 验证
+- 通过：`npm run typecheck`（退出码 0）、`npm run test`（34/34 通过）、`npm run build`（Vite 构建成功）。
+- 通过：Playwright + 系统 Chrome 冒烟验证——底部导航 5 项、列表页 hero 与主题卡片（考研数学二 / 40 条公式 / 48 张卡片）、主题页 15 章节、KaTeX 渲染 245 处、章节折叠（15→14 open）、双标签切换（公式速查 ↔ 记忆卡片）、48 张 3D 翻卡（0→1 flipped）、返回导航正常、版本显示「当前版本 v4.0.0」，全程无 JS 报错。

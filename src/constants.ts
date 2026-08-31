@@ -1,6 +1,6 @@
 import type { QuestionType, SectionDef, SubjectDef } from './types';
 
-export const APP_VERSION = 'v4.5.2';
+export const APP_VERSION = 'v4.5.3';
 
 export const TYPE_LABELS: Record<QuestionType, string> = {
   single: '单选题',

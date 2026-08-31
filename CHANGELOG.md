@@ -6,6 +6,18 @@
 
 ---
 
+## v4.5.1（2026-08-31）亮色顶栏纯白消接缝 + theme-color 亮统一 #FFFFFF（状态栏视觉跟随主题）
+
+> 版本说明：**次版本号 +1**（小改动：亮模式顶栏视觉接缝修复与 theme-color 统一，功能 / 数据 / 架构零变化）。
+- **根因与对策**（用户截图反馈：亮模式状态栏与顶栏色差接缝）：iOS 亮 `default` 状态栏为纯白不透明（平台限制，底色不可自定义）；亮色顶栏改纯白与白状态栏无缝融合（iOS 原生导航栏观感）。新增令牌 `--topbar-bg`（`:root` 亮 `#FFFFFF` / dark `var(--glass)`），`.topbar` background 改用令牌；暗色玻璃顶栏不变。
+- **theme-color 亮统一 #FFFFFF**：`theme.ts` applyTheme、`index.html` 内联脚本与静态 meta、manifest `theme_color`（`#4B3FE3` → `#FFFFFF`，`background_color` 保持 `#F2F2F7`）；Android 系统工具栏亮色同纯白，双端一致。
+- **版本**：APP_VERSION v4.5.0→v4.5.1，sw 缓存 `kaoyan-v4.5.1`。
+- **验证**：build（含 tsc）通过（产物 `index-Cw9Ol3OT.js` 592.80 kB / `index-B5sdtsNa.css` 64.93 kB）；meta 同步端到端（实点 `#themeToggle`：亮 #FFFFFF/default → 暗 #000000/black-translucent）；iPhone 视口截图 3 张目检亮顶栏纯白接缝消失（含用户圈出的知识库页）、暗色全黑沉浸无回归。
+- **部署**：`dist-deploy.zip`（70 文件，1,092,947 B）发布到 `llss.netlify.app`，deploy `6a958a5aabc0ce50fe29079d` ready；线上验证全绿（content="#FFFFFF" / --topbar-bg / background:var(--topbar-bg) / sw 缓存名 / manifest theme_color 字节流核验 / 图标 200）。
+- **GitHub 同步**：sw.js+constants.ts+manifest（`c17eff3`）、index.html+theme.ts（`e735fd1`）、CHANGELOG 精要条目（本提交）；`css/style.css` 超单次推送上限，不入 GitHub，以本地为准。
+
+---
+
 ## v4.5.0（2026-08-31）APP 化交互细节 + 状态栏跟随主题（standalone 顶部白条修复）
 
 > 版本说明：**次版本号 +1**（交互 / 体验层优化，功能 / 数据 / 架构零变化）。
@@ -16,7 +28,7 @@
 - **版本**：APP_VERSION v4.4.0→v4.5.0，sw 缓存 `kaoyan-v4.5.0`。
 - **验证**：build（含 tsc）通过（产物 `index-C6YBzUVM.js` 592.80 kB / `index-BKm-ISLC.css` 64.88 kB）；meta 同步端到端（实点 `#themeToggle`：亮 #F2F2F7/default → 暗 #000000/black-translucent）；iPhone 视口截图 3 张目检暗色全黑无白条。
 - **部署**：`dist-deploy.zip`（70 文件，1,092,948 B）发布到 `llss.netlify.app`，deploy `6a957aaf9a9104806fc38746` ready；线上验证全绿（启动脚本 / theme-color / touch-action / overscroll / nav-active / dvh / sw 缓存名 / manifest shortcuts 字节流核验 / 图标 200）。
-- **GitHub 同步**：sw.js+constants.ts+manifest（`b2f132f`）、index.html（`5c855cb`）、navigation.ts+theme.ts+main.ts（`6ef1a30`）、constants.ts 文本对齐修正（`1f25668`/`9859e9f`）、CHANGELOG 精要条目与文本修正（`e61b2de`/`546fbe5`/`f278681`/本提交）；`css/style.css` 约 32KB 超单次推送上限，不入 GitHub，以本地为准。
+- **GitHub 同步**：sw.js+constants.ts+manifest（`b2f132f`）、index.html（`5c855cb`）、navigation.ts+theme.ts+main.ts（`6ef1a30`）、constants.ts 文本对齐修正（`1f25668`/`9859e9f`）、CHANGELOG 精要条目与文本修正（`e61b2de`/`546fbe5`/`f278681`/`389ec4a`）；`css/style.css` 约 32KB 超单次推送上限，不入 GitHub，以本地为准。
 
 ---
 

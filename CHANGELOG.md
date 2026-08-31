@@ -2,7 +2,19 @@
 
 > 版本规则：**大改动**（新增功能、架构变更）→ 主版本号 +1；**小改动**（Bug 修复、细节优化）→ 次版本号 +1。
 > 版本号常量位于 `src/constants.ts`（v3.0.0 前位于 `index.html` 顶部），管理页底部实时显示。
-> 注：GitHub 端副本受 MCP 单次推送体量限制为精要版；v4.2.0 及更早版本记录见 `CHANGELOG-archive.md`；完整权威记录以仓库本地 `CHANGELOG.md` 与各 `*.changelog.log` 为准。
+> 注：GitHub 端副本受 MCP 单次推送体量限制为精要版；v4.2.1 及更早版本记录见 `CHANGELOG-archive.md`；完整权威记录以仓库本地 `CHANGELOG.md` 与各 `*.changelog.log` 为准。
+
+---
+
+## v4.5.2（2026-08-31）修复暗模式状态栏仍白（启动期 meta 写入 null 缺陷）
+
+> 版本说明：**次版本号 +1**（小修复：启动期 meta 同步脚本顺序缺陷，功能 / 数据 / 架构零变化）。
+- **根因**（用户截图反馈：暗模式内容已暗但状态栏仍白条）：内联脚本位于两枚 meta 之前，脚本执行时 `querySelector` 取 null，暗色启动的 `#000000/black-translucent` 写入从未生效，iOS 启动读到的恒为静态 `default`。
+- **修复**：`theme-color` / `status-bar-style` 两枚 meta 移至内联脚本前；暗色启动正确写入 meta，状态栏透明沉浸；静态值保持亮色默认。
+- **版本**：APP_VERSION v4.5.1→v4.5.2，sw 缓存 `kaoyan-v4.5.2`。
+- **验证**：build（含 tsc）通过（产物 `index-Brdu8nc3.js` 592.80 kB）；冷启动 meta 端到端（预置 localStorage 冷加载：暗 `#000000/black-translucent` / 亮 `#FFFFFF/default` ✔，修复前暗启动为静态 default 白）；线上 `meta_before_script=True`；截图 2 张目检暗色全黑沉浸 / 亮色纯白顶栏。
+- **部署**：`dist-deploy.zip`（70 文件，1,092,947 B）发布到 `llss.netlify.app`，deploy `6a9592f40869cda72f1037c0` ready。
+- **GitHub 同步**：sw.js+constants.ts（`54a9b6c`）、index.html（`fb96245`）、CHANGELOG 精要条目 + v4.2.1 归档（本提交系列）；`css/style.css` 超单次推送上限，不入 GitHub，以本地为准。
 
 ---
 
@@ -14,7 +26,7 @@
 - **版本**：APP_VERSION v4.5.0→v4.5.1，sw 缓存 `kaoyan-v4.5.1`。
 - **验证**：build（含 tsc）通过（产物 `index-Cw9Ol3OT.js` 592.80 kB / `index-B5sdtsNa.css` 64.93 kB）；meta 同步端到端（实点 `#themeToggle`：亮 #FFFFFF/default → 暗 #000000/black-translucent）；iPhone 视口截图 3 张目检亮顶栏纯白接缝消失（含用户圈出的知识库页）、暗色全黑沉浸无回归。
 - **部署**：`dist-deploy.zip`（70 文件，1,092,947 B）发布到 `llss.netlify.app`，deploy `6a958a5aabc0ce50fe29079d` ready；线上验证全绿（content="#FFFFFF" / --topbar-bg / background:var(--topbar-bg) / sw 缓存名 / manifest theme_color 字节流核验 / 图标 200）。
-- **GitHub 同步**：sw.js+constants.ts+manifest（`c17eff3`）、index.html+theme.ts（`e735fd1`）、CHANGELOG 精要条目（本提交）；`css/style.css` 超单次推送上限，不入 GitHub，以本地为准。
+- **GitHub 同步**：sw.js+constants.ts+manifest（`c17eff3`）、index.html+theme.ts（`e735fd1`）、CHANGELOG 精要条目（`d6de3a1`）；`css/style.css` 超单次推送上限，不入 GitHub，以本地为准。
 
 ---
 
@@ -57,15 +69,3 @@
 - **验证**：build（含 tsc）通过（产物 `index-gUzZTJQJ.js` 591.86 kB / `index-Cj3kV0Tn.css` 62.47 kB）；iPhone 视口（390×844）截图核验明/暗双主题玻璃渲染正确。
 - **部署**：`dist-deploy.zip`（70 文件，1,091,782 B）发布到 `llss.netlify.app`，deploy `6a956d2769b077bdeb269f88` ready；线上验证全绿（新 bundle/CSS、viewport-fit、sw 缓存名、图标 200）。
 - **GitHub 同步**：sw.js+constants.ts（`c06d195`）、index.html（`c4efd71`）；`css/style.css` 约 30KB 超单次推送上限，不入 GitHub，以本地为准。
-
----
-
-## v4.2.1（2026-08-31）iOS「添加到主屏幕」支持 + 苹果风 PNG 应用图标
-
-> 版本说明：**次版本号 +1**（小改动：PWA 图标 PNG 化 / 苹果风重绘 + meta 修正，无功能 / 架构变化）。
-- **新增 4 枚苹果风 PNG 图标**（GDI+ 矢量绘制：紫色渐变底 #8165FF→#382DAA + 白色翻开书本 + 深紫圆底白对勾徽章）：`apple-touch-icon.png`（180，iOS 主屏专用）、`icon-192.png`、`icon-512.png`、`icon-maskable-512.png`（0.72 安全区）。
-- **变更**：`index.html` apple-touch-icon 改 PNG（iOS 不渲染 SVG 主屏图标）+ 新增 `mobile-web-app-capable` meta；manifest icons 追加 3 枚 PNG；APP_VERSION v4.2.0→v4.2.1，sw 缓存 `kaoyan-v4.2.1`。
-- **验证**：typecheck / build 通过（产物 `index-CzUDMMwG.js` 591.86 kB）；图标目检符合 iOS 美学。
-- **部署**：`dist-deploy.zip`（70 文件，1,090,818 B）发布到 `llss.netlify.app`，deploy `6a955e8e925ac48455feba70` ready（2026-08-31T10:59:27Z）；线上验证全绿（sw 缓存名 / 新 bundle / 四枚 PNG 200 / manifest 含 3 条 PNG）。
-- **使用**：iPhone Safari 打开 `llss.netlify.app` → 分享 → 添加到主屏幕，全屏独立应用打开。
-- **GitHub 同步**：manifest+sw.js（`c353b0e`）、index.html（`67a88f1`）、constants.ts（`a907007`）；历史版本归档 `CHANGELOG-archive.md`（`cae6eba`）；遗留临时文件已清理；4 枚 PNG 为二进制，MCP 通道仅支持文本，暂不入库。

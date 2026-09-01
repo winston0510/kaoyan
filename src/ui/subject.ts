@@ -125,6 +125,7 @@ export function openQuizModal(subjectId: string, chapter: string, section: strin
       <div class="mode-option active" data-mode="random" onclick="selectMode(this)"><span class="mode-title">随机刷题</span><span class="mode-desc">从范围内随机抽取题目</span></div>
       <div class="mode-option" data-mode="sequential" onclick="selectMode(this)"><span class="mode-title">顺序刷题</span><span class="mode-desc">按题库顺序练习</span></div>
       <div class="mode-option" data-mode="fresh" onclick="selectMode(this)"><span class="mode-title">顺序只刷未掌握</span><span class="mode-desc">按顺序练习，跳过已答对的题</span></div>
+      <div class="mode-option" data-mode="continue" onclick="selectMode(this)"><span class="mode-title">继续刷题</span><span class="mode-desc">按顺序练习，跳过所有已答题目</span></div>
       ${wc > 0 ? `<div class="mode-option" data-mode="wrong" onclick="selectMode(this)"><span class="mode-title">错题重做</span><span class="mode-desc">仅做错题本中未掌握的 ${wc} 题</span></div>` : ''}
     </div>
     <div style="margin-bottom:20px"><label style="font-size:.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:8px">题目数量：<span id="modalCount">20</span> 题</label>

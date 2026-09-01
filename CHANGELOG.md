@@ -6,6 +6,19 @@
 
 ---
 
+## v4.7.0（2026-09-01）新增「继续刷题」模式：按顺序做题，跳过所有已答题目（精要压缩版）
+
+> 完整记录见本地 `CHANGELOG.md` v4.7.0 节与 `release_v4.7.0.changelog.log`。
+- **需求定稿**（用户三轮确认）：按题库顺序做题、不洗牌；**有作答记录即跳过（不论上次答对还是答错）**；答错照常进错题本（既有行为不变）。与既有「顺序只刷未掌握」（跳答对、留答错未掌握）互补。
+- **弹窗**（`src/ui/subject.ts`）：新增第 5 个模式选项 `data-mode="continue"`「继续刷题 / 按顺序练习，跳过所有已答题目」，位于「顺序只刷未掌握」与「错题重做」之间。
+- **过滤逻辑**（`src/ui/quiz.ts` `startQuiz`）：新增 `continue` 分支——以 `kaoyan_records` 中 `question_id` 非空的记录构建 `answeredIds` 集合，凡 id 在集合中即剔除；新增 `allAnswered` 标志，范围内题目全部答完时空态精确提示「题目已全部刷完，试试「错题重做」或更换范围」。
+- **版本**：APP_VERSION v4.6.1→v4.7.0，sw 缓存 `kaoyan-v4.7.0`。
+- **验证**：typecheck / 34 项测试 / build（`index-D-PlKLHS.js` 594.56 kB）全过；冒烟 `NODE_EXIT=0`（MODES=4、版本 v4.7.0、零报错）；专项 `_verify_continue_v470.cjs` 六断言全绿 `VERIFY_EXIT=0`（弹窗选项文案、顺序跳过已答 1-3 首题=4、故意答错→错题本 +1、再开继续首题=5 答错也跳过、零 JS 报错；演示题库无 id，故注入 8 道带 id 题验证）。
+- **部署（阻断）**：Netlify 被账户额度阻断（403 `Account credit usage exceeded`，最小 zip 探测确认）；`dist-deploy.zip`（70 文件 / 0 反斜杠 / 1,093,247 B）已就绪，待额度恢复重发；线上暂保持 v4.5.4。
+- **GitHub 同步**：constants+sw+subject（`0887014`）、quiz.ts（`1810b5a`）、CHANGELOG（本提交）。
+
+---
+
 ## v4.6.1（2026-09-01）章节治理：数学二 / 电路 / 英语二全量题目划入详细章节（政治跳过），总量 11,628 不变（精要压缩版）
 
 > 完整记录见本地 `CHANGELOG.md` v4.6.1 节与 `release_v4.6.1.changelog.log`。

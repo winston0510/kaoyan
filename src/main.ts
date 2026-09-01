@@ -4,7 +4,7 @@ import { APP_VERSION } from './constants';
 import { renderHome, selectMode } from './ui/home';
 import { openQuizModal, openSubject, renderSubject } from './ui/subject';
 import { switchPage } from './ui/navigation';
-import { finishQuiz, nextQuestion, quitQuiz, renderQuestion, retryWrong, selectOption, selfAssess, startQuiz, submitAnswer, toggleFavorite, toggleMultiOption } from './ui/quiz';
+import { confirmQuit, finishQuiz, nextQuestion, quitQuiz, renderQuestion, resumeQuiz, retryWrong, selectOption, selfAssess, startQuiz, submitAnswer, toggleFavorite, toggleMultiOption } from './ui/quiz';
 import { renderFavorites, removeFavorite, setFavFilter, startFavQuiz } from './ui/favorites';
 import { renderWrongBook, setWrongFilter } from './ui/wrongbook';
 import { renderStats } from './ui/stats';
@@ -29,6 +29,8 @@ const windowApi: Record<string, unknown> = {
   selfAssess,
   nextQuestion,
   quitQuiz,
+  resumeQuiz,
+  confirmQuit,
   finishQuiz,
   retryWrong,
   renderWrongBook,

@@ -179,3 +179,119 @@ export function toggleFavorite(el: HTMLElement | null): void {
   }
   toast(nowFav ? '已收藏' : '已取消收藏');
 }
+
+export function submitAnswer(): void {
+  const st = quizState;
+  if (!st) return;
+  const q = st.questions[st.index];
+  const isMultiple = q.type === 'multiple';
+  let userAnswer: string;
+
+  if (q.type === 'fill') {
+    const inp = document.getElementById('fillInput') as HTMLInputElement | null;
+    userAnswer = (inp?.value || '').trim();
+    if (!userAnswer) { toast('请填写答案'); return; }
+    const isCorrect = judgeAnswer('fill', userAnswer, q.answer);
+    const inp2 = document.getElementById('fillInput');
+    if (inp2) {
+      inp2.classList.add(isCorrect ? 'correct' : 'wrong');
+      inp2.setAttribute('readonly', 'readonly');
+    }
+    recordResult(q, userAnswer, isCorrect);
+    showFeedback(q, userAnswer, isCorrect);
+    return;
+  }
+
+  if (q.type === 'essay') {
+    const ta = document.getElementById('essayInput') as HTMLTextAreaElement | null;
+    userAnswer = (ta?.value || '').trim();
+    if (!userAnswer) { toast('请先写下你的作答'); return; }
+    pendingEssay = { q, userAnswer };
+    const ta2 = document.getElementById('essayInput');
+    if (ta2) ta2.setAttribute('readonly', 'readonly');
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) submitBtn.style.display = 'none';
+    const feedback = document.getElementById('feedbackArea');
+    if (feedback) feedback.innerHTML = `
+      <div class="explanation-box"><div class="exp-label">参考答案</div><div class="exp-text">${formatMath(q.explanation || q.answer)}</div></div>
+      <div style="padding:0 16px">
+        <div class="self-check">
+          <button class="btn btn-success" onclick="selfAssess(true)">我做对了</button>
+          <button class="btn btn-danger" onclick="selfAssess(false)">我做错了</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (isMultiple) {
+    const selected = [...document.querySelectorAll('#quizContent .option.selected')].map(e => (e as HTMLElement).dataset.letter || '');
+    if (selected.length === 0) { toast('请至少选择一个选项'); return; }
+    userAnswer = selected.sort().join('');
+  } else {
+    const sel = document.querySelector('#quizContent .option.selected');
+    if (!sel) { toast('请选择一个选项'); return; }
+    userAnswer = (sel as HTMLElement).dataset.letter || '';
+  }
+
+  const correctAnswer = q.answer.trim().toUpperCase();
+  const isCorrect = userAnswer === correctAnswer;
+
+  const allOptions = document.querySelectorAll('#quizContent .option');
+  allOptions.forEach(o => {
+    const letter = (o as HTMLElement).dataset.letter;
+    if (isMultiple) {
+      if (letter && correctAnswer.includes(letter)) o.classList.add('correct');
+      if (letter && o.classList.contains('selected') && !correctAnswer.includes(letter)) o.classList.add('wrong');
+    } else {
+      if (letter === correctAnswer) o.classList.add('correct');
+      if (o.classList.contains('selected') && letter !== correctAnswer) o.classList.add('wrong');
+    }
+  });
+
+  recordResult(q, userAnswer, isCorrect);
+  showFeedback(q, userAnswer, isCorrect);
+}
+
+export function selfAssess(correct: boolean): void {
+  if (!pendingEssay) return;
+  const { q, userAnswer } = pendingEssay;
+  pendingEssay = null;
+  recordResult(q, userAnswer, correct);
+  showFeedback(q, userAnswer, correct);
+}
+
+function recordResult(q: Question, userAnswer: string, isCorrect: boolean): void {
+  const st = quizState;
+  if (!st) return;
+  if (isCorrect) st.correct++; else st.wrong++;
+
+  const today = todayKey();
+  const todayStats = getLocal<{ total: number; correct: number }>('today_' + today, { total: 0, correct: 0 }) || { total: 0, correct: 0 };
+  todayStats.total++;
+  if (isCorrect) todayStats.correct++;
+  setLocal('today_' + today, todayStats);
+  void syncTodayToDB(todayStats, today);
+
+  const records = getLocal<QuizRecord[]>('records', []);
+  const record: QuizRecord = { question_id: q.id ?? null, subject: q.subject, is_correct: isCorrect, user_answer: userAnswer, created_at: new Date().toISOString() };
+  records.push(record);
+  setLocal('records', records.slice(-1000));
+  void syncRecordToDB(record);
+
+  if (!isCorrect) {
+    const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []);
+    const exists = wrongBook.find(w => w.id === q.id);
+    if (!exists) {
+      wrongBook.push({ ...q as WrongBookItem, userAnswer, mastered: false, reviewCount: 0, wrongTime: Date.now() });
+    } else {
+      exists.userAnswer = userAnswer;
+      exists.wrongTime = Date.now();
+    }
+    setLocal('wrongBook', wrongBook);
+  } else {
+    const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []).filter(w => w.id !== q.id);
+    setLocal('wrongBook', wrongBook);
+  }
+  void syncWrongBookToDB(q, userAnswer, isCorrect);
+}

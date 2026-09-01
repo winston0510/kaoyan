@@ -14,12 +14,12 @@ def esc(s):
 def normalize_question(q):
     q = re.sub(r'<[^>]+>', '', q)
     q = re.sub(r'\s+', '', q)
-    q = re.sub(r'[，。、？！（）；：“”‘’【】《》〈〉「」『』()（）]', '', q)
+    q = re.sub(r'[，。、？！（）；：""''【】《》〈〉「」『』()（）]', '', q)
     q = q.lower()
     return q[:80]
 
 questions = []
-seen_keys = {}  # key -> index in questions list
+seen_keys = {}
 stats = defaultdict(lambda: {'total': 0, 'dup': 0, 'enriched': 0})
 
 GENERIC_SOURCES = {'', '政治题库', '政治多源题库'}
@@ -58,7 +58,6 @@ def add_question(subject, chapter, qtype, question, options, answer, explanation
         'source': source or ''
     })
 
-# ====== 1. Parse existing PostgreSQL SQL files ======
 def parse_pg_sql(filepath, default_source='', inline_source=False):
     if not os.path.exists(filepath):
         print(f"File not found: {filepath}")
@@ -96,7 +95,6 @@ def parse_pg_sql(filepath, default_source='', inline_source=False):
         add_question(subject, chapter, qtype, question, options, answer, explanation, int(diff), src)
     print(f"{os.path.basename(filepath)}: parsed {len(matches)} rows")
 
-# ====== 2. Parse politics-only SQL (no subject in first field) ======
 def parse_politics_sql(filepath, default_source='政治题库'):
     if not os.path.exists(filepath):
         print(f"File not found: {filepath}")
@@ -121,12 +119,9 @@ def parse_politics_sql(filepath, default_source='政治题库'):
         add_question('politics', chapter, qtype, question, options, answer, explanation, int(diff), default_source)
     print(f"{os.path.basename(filepath)}: parsed {len(matches)} rows")
 
-# ====== 3. Parse kyzz MySQL SQL ======
 def parse_mysql_values(text, start):
-    """Parse MySQL VALUES (...) starting at position after VALUES keyword"""
     vals = []
     i = start
-    # skip whitespace
     while i < len(text) and text[i] in ' \t\n\r':
         i += 1
     if i >= len(text) or text[i] != '(':
@@ -144,7 +139,6 @@ def parse_mysql_values(text, start):
             i += 1
             continue
         if text[i] == "'":
-            # quoted string
             i += 1
             val = ''
             while i < len(text):
@@ -159,7 +153,6 @@ def parse_mysql_values(text, start):
                     i += 1
             vals.append(val)
         else:
-            # number or other
             val = ''
             while i < len(text) and text[i] not in ",)":
                 val += text[i]
@@ -181,7 +174,6 @@ def parse_kyzz_sql(filepath):
         vals, _ = parse_mysql_values(content, m.end())
         if not vals or len(vals) < 14:
             continue
-        # Fields: id, title, type, option_a, option_b, option_c, option_d, answer, analysis, year, num, p_from, level_from, top_from
         _id = vals[0]
         title = vals[1]
         qtype_raw = vals[2]
@@ -197,10 +189,8 @@ def parse_kyzz_sql(filepath):
         level_from = vals[12]
         top_from = vals[13]
         
-        # Map type
         qtype = 'single' if '单选' in qtype_raw else ('multiple' if '多选' in qtype_raw else 'judge')
         
-        # Build options JSON array
         opts = []
         letters = ['A', 'B', 'C', 'D']
         for idx, opt in enumerate([opt_a, opt_b, opt_c, opt_d]):
@@ -208,7 +198,6 @@ def parse_kyzz_sql(filepath):
                 opts.append(f'{letters[idx]}. {opt.strip()}')
         options_str = json.dumps(opts, ensure_ascii=False)
         
-        # Build source
         parts = []
         if top_from and top_from.strip() and top_from.strip().lower() != 'null':
             parts.append(top_from.strip())
@@ -216,29 +205,24 @@ def parse_kyzz_sql(filepath):
             parts.append(f'{year.strip()}年真题')
         source = ' '.join(parts) if parts else '考研政治真题'
         
-        # Chapter
         chapter = p_from.strip() if p_from and p_from.strip() and p_from.strip().lower() != 'null' else '考研政治综合'
         
-        # Explanation: combine analysis with level_from
         explanation = analysis.strip() if analysis else ''
         if level_from and level_from.strip():
             explanation = f'[{level_from.strip()}] {explanation}' if explanation else level_from.strip()
         
-        # Difficulty
         difficulty = 2
         if level_from and '简单' in level_from:
             difficulty = 1
         elif level_from and ('难' in level_from or '重点' in level_from):
             difficulty = 3
         
-        # Answer: handle multi-answer
         answer = answer.strip().upper()
         
         add_question('politics', chapter, qtype, title, options_str, answer, explanation, difficulty, source)
         count += 1
     print(f"{os.path.basename(filepath)}: parsed {count} rows")
 
-# ====== 4. Parse maogai JSON ======
 def parse_maogai_json(filepath):
     if not os.path.exists(filepath):
         print(f"File not found: {filepath}")
@@ -267,14 +251,11 @@ def parse_maogai_json(filepath):
         count += 1
     print(f"{os.path.basename(filepath)}: parsed {count} rows")
 
-# ====== Run all parsers ======
 print("=== 开始解析所有题库文件 ===\n")
 
-# Existing SQL files
 parse_pg_sql(os.path.join(BASE, 'seed_all.sql'), '')
 parse_politics_sql(os.path.join(BASE, 'seed_politics_new.sql'), '政治多源题库')
 
-# 真题 / 名师题增量（行内含 source 字段，v3.11.0 新增）
 parse_pg_sql(os.path.join(BASE, 'seed_real_math_2020_2022.sql'), '', inline_source=True)
 parse_pg_sql(os.path.join(BASE, 'seed_real_math_2023_2024.sql'), '', inline_source=True)
 parse_pg_sql(os.path.join(BASE, 'seed_real_english_cloze.sql'), '', inline_source=True)
@@ -289,7 +270,6 @@ parse_pg_sql(os.path.join(BASE, 'seed_real_math_2015_2019.sql'), '', inline_sour
 parse_pg_sql(os.path.join(BASE, 'seed_real_english_2015_2019.sql'), '', inline_source=True)
 parse_pg_sql(os.path.join(BASE, 'seed_real_circuit.sql'), '', inline_source=True)
 
-# Quark network disk files
 parse_kyzz_sql(os.path.join(PARENT, 'kyzz_question.sql'))
 parse_maogai_json(os.path.join(PARENT, 'maogai_all.json'))
 
@@ -318,7 +298,6 @@ print(f"\n来源分布 (前20):")
 for src, cnt in source_counts.most_common(20):
     print(f"  {src}: {cnt}")
 
-# ====== Output SQL with source field ======
 output = os.path.join(BASE, 'seed_all_final.sql')
 with open(output, 'w', encoding='utf-8') as f:
     f.write("-- ============================================\n")
@@ -329,8 +308,59 @@ with open(output, 'w', encoding='utf-8') as f:
         f.write(f"--   {names.get(subj, subj)}: {cnt}题\n")
     f.write("-- ============================================\n\n")
     
-    # Schema with source field
-    f.write("""-- 数据库表结构\nCREATE TABLE IF NOT EXISTS questions (\n  id          BIGSERIAL PRIMARY KEY,\n  subject     TEXT NOT NULL,\n  chapter     TEXT NOT NULL DEFAULT '',\n  type        TEXT NOT NULL DEFAULT 'single',\n  question    TEXT NOT NULL,\n  options     JSONB DEFAULT '[]',\n  answer      TEXT NOT NULL,\n  explanation TEXT DEFAULT '',\n  difficulty  SMALLINT DEFAULT 1,\n  source      TEXT DEFAULT '',\n  created_at  TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE TABLE IF NOT EXISTS quiz_records (\n  id          BIGSERIAL PRIMARY KEY,\n  question_id BIGINT NOT NULL REFERENCES questions(id) ON DELETE CASCADE,\n  subject     TEXT NOT NULL,\n  is_correct  BOOLEAN NOT NULL,\n  user_answer TEXT NOT NULL,\n  created_at  TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE TABLE IF NOT EXISTS wrong_book (\n  id          BIGSERIAL PRIMARY KEY,\n  question_id BIGINT NOT NULL REFERENCES questions(id) ON DELETE CASCADE UNIQUE,\n  subject     TEXT NOT NULL,\n  user_answer TEXT NOT NULL,\n  mastered    BOOLEAN DEFAULT FALSE,\n  review_count SMALLINT DEFAULT 0,\n  created_at  TIMESTAMPTZ DEFAULT NOW(),\n  updated_at  TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE INDEX IF NOT EXISTS idx_questions_subject ON questions(subject);\nCREATE INDEX IF NOT EXISTS idx_questions_chapter ON questions(subject, chapter);\nCREATE INDEX IF NOT EXISTS idx_quiz_records_created ON quiz_records(created_at);\nCREATE INDEX IF NOT EXISTS idx_quiz_records_subject ON quiz_records(subject);\nCREATE INDEX IF NOT EXISTS idx_wrong_book_subject ON wrong_book(subject);\nCREATE INDEX IF NOT EXISTS idx_wrong_book_mastered ON wrong_book(mastered);\n\nALTER TABLE questions ENABLE ROW LEVEL SECURITY;\nALTER TABLE quiz_records ENABLE ROW LEVEL SECURITY;\nALTER TABLE wrong_book ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Allow all on questions\" ON questions FOR ALL USING (true);\nCREATE POLICY \"Allow all on quiz_records\" ON quiz_records FOR ALL USING (true);\nCREATE POLICY \"Allow all on wrong_book\" ON wrong_book FOR ALL USING (true);\n\n""")
+    schema_lines = [
+        '-- 数据库表结构',
+        'CREATE TABLE IF NOT EXISTS questions (',
+        '  id          BIGSERIAL PRIMARY KEY,',
+        '  subject     TEXT NOT NULL,',
+        "  chapter     TEXT NOT NULL DEFAULT '',",
+        "  type        TEXT NOT NULL DEFAULT 'single',",
+        '  question    TEXT NOT NULL,',
+        "  options     JSONB DEFAULT '[]',",
+        '  answer      TEXT NOT NULL,',
+        "  explanation TEXT DEFAULT '',",
+        '  difficulty  SMALLINT DEFAULT 1,',
+        "  source      TEXT DEFAULT '',",
+        '  created_at  TIMESTAMPTZ DEFAULT NOW()',
+        ');',
+        '',
+        'CREATE TABLE IF NOT EXISTS quiz_records (',
+        '  id          BIGSERIAL PRIMARY KEY,',
+        '  question_id BIGINT NOT NULL REFERENCES questions(id) ON DELETE CASCADE,',
+        '  subject     TEXT NOT NULL,',
+        '  is_correct  BOOLEAN NOT NULL,',
+        '  user_answer TEXT NOT NULL,',
+        '  created_at  TIMESTAMPTZ DEFAULT NOW()',
+        ');',
+        '',
+        'CREATE TABLE IF NOT EXISTS wrong_book (',
+        '  id          BIGSERIAL PRIMARY KEY,',
+        '  question_id BIGINT NOT NULL REFERENCES questions(id) ON DELETE CASCADE UNIQUE,',
+        '  subject     TEXT NOT NULL,',
+        '  user_answer TEXT NOT NULL,',
+        '  mastered    BOOLEAN DEFAULT FALSE,',
+        '  review_count SMALLINT DEFAULT 0,',
+        '  created_at  TIMESTAMPTZ DEFAULT NOW(),',
+        '  updated_at  TIMESTAMPTZ DEFAULT NOW()',
+        ');',
+        '',
+        'CREATE INDEX IF NOT EXISTS idx_questions_subject ON questions(subject);',
+        'CREATE INDEX IF NOT EXISTS idx_questions_chapter ON questions(subject, chapter);',
+        'CREATE INDEX IF NOT EXISTS idx_quiz_records_created ON quiz_records(created_at);',
+        'CREATE INDEX IF NOT EXISTS idx_quiz_records_subject ON quiz_records(subject);',
+        'CREATE INDEX IF NOT EXISTS idx_wrong_book_subject ON wrong_book(subject);',
+        'CREATE INDEX IF NOT EXISTS idx_wrong_book_mastered ON wrong_book(mastered);',
+        '',
+        'ALTER TABLE questions ENABLE ROW LEVEL SECURITY;',
+        'ALTER TABLE quiz_records ENABLE ROW LEVEL SECURITY;',
+        'ALTER TABLE wrong_book ENABLE ROW LEVEL SECURITY;',
+        '',
+        'CREATE POLICY "Allow all on questions" ON questions FOR ALL USING (true);',
+        'CREATE POLICY "Allow all on quiz_records" ON quiz_records FOR ALL USING (true);',
+        'CREATE POLICY "Allow all on wrong_book" ON wrong_book FOR ALL USING (true);',
+        ''
+    ]
+    f.write('\n'.join(schema_lines) + '\n')
     
     by_subject = defaultdict(list)
     for q in questions:

@@ -287,6 +287,7 @@ parse_pg_sql(os.path.join(BASE, 'seed_adv_math2.sql'), '', inline_source=True)
 parse_pg_sql(os.path.join(BASE, 'seed_teacher_math2.sql'), '', inline_source=True)
 parse_pg_sql(os.path.join(BASE, 'seed_real_math_2015_2019.sql'), '', inline_source=True)
 parse_pg_sql(os.path.join(BASE, 'seed_real_english_2015_2019.sql'), '', inline_source=True)
+parse_pg_sql(os.path.join(BASE, 'seed_real_circuit.sql'), '', inline_source=True)
 
 # Quark network disk files
 parse_kyzz_sql(os.path.join(PARENT, 'kyzz_question.sql'))
@@ -329,56 +330,7 @@ with open(output, 'w', encoding='utf-8') as f:
     f.write("-- ============================================\n\n")
     
     # Schema with source field
-    f.write("""-- 数据库表结构\nCREATE TABLE IF NOT EXISTS questions (
-  id          BIGSERIAL PRIMARY KEY,
-  subject     TEXT NOT NULL,
-  chapter     TEXT NOT NULL DEFAULT '',
-  type        TEXT NOT NULL DEFAULT 'single',
-  question    TEXT NOT NULL,
-  options     JSONB DEFAULT '[]',
-  answer      TEXT NOT NULL,
-  explanation TEXT DEFAULT '',
-  difficulty  SMALLINT DEFAULT 1,
-  source      TEXT DEFAULT '',
-  created_at  TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS quiz_records (
-  id          BIGSERIAL PRIMARY KEY,
-  question_id BIGINT NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
-  subject     TEXT NOT NULL,
-  is_correct  BOOLEAN NOT NULL,
-  user_answer TEXT NOT NULL,
-  created_at  TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS wrong_book (
-  id          BIGSERIAL PRIMARY KEY,
-  question_id BIGINT NOT NULL REFERENCES questions(id) ON DELETE CASCADE UNIQUE,
-  subject     TEXT NOT NULL,
-  user_answer TEXT NOT NULL,
-  mastered    BOOLEAN DEFAULT FALSE,
-  review_count SMALLINT DEFAULT 0,
-  created_at  TIMESTAMPTZ DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_questions_subject ON questions(subject);
-CREATE INDEX IF NOT EXISTS idx_questions_chapter ON questions(subject, chapter);
-CREATE INDEX IF NOT EXISTS idx_quiz_records_created ON quiz_records(created_at);
-CREATE INDEX IF NOT EXISTS idx_quiz_records_subject ON quiz_records(subject);
-CREATE INDEX IF NOT EXISTS idx_wrong_book_subject ON wrong_book(subject);
-CREATE INDEX IF NOT EXISTS idx_wrong_book_mastered ON wrong_book(mastered);
-
-ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE quiz_records ENABLE ROW LEVEL SECURITY;
-ALTER TABLE wrong_book ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY \"Allow all on questions\" ON questions FOR ALL USING (true);
-CREATE POLICY \"Allow all on quiz_records\" ON quiz_records FOR ALL USING (true);
-CREATE POLICY \"Allow all on wrong_book\" ON wrong_book FOR ALL USING (true);
-
-""")
+    f.write("""-- 数据库表结构\nCREATE TABLE IF NOT EXISTS questions (\n  id          BIGSERIAL PRIMARY KEY,\n  subject     TEXT NOT NULL,\n  chapter     TEXT NOT NULL DEFAULT '',\n  type        TEXT NOT NULL DEFAULT 'single',\n  question    TEXT NOT NULL,\n  options     JSONB DEFAULT '[]',\n  answer      TEXT NOT NULL,\n  explanation TEXT DEFAULT '',\n  difficulty  SMALLINT DEFAULT 1,\n  source      TEXT DEFAULT '',\n  created_at  TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE TABLE IF NOT EXISTS quiz_records (\n  id          BIGSERIAL PRIMARY KEY,\n  question_id BIGINT NOT NULL REFERENCES questions(id) ON DELETE CASCADE,\n  subject     TEXT NOT NULL,\n  is_correct  BOOLEAN NOT NULL,\n  user_answer TEXT NOT NULL,\n  created_at  TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE TABLE IF NOT EXISTS wrong_book (\n  id          BIGSERIAL PRIMARY KEY,\n  question_id BIGINT NOT NULL REFERENCES questions(id) ON DELETE CASCADE UNIQUE,\n  subject     TEXT NOT NULL,\n  user_answer TEXT NOT NULL,\n  mastered    BOOLEAN DEFAULT FALSE,\n  review_count SMALLINT DEFAULT 0,\n  created_at  TIMESTAMPTZ DEFAULT NOW(),\n  updated_at  TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE INDEX IF NOT EXISTS idx_questions_subject ON questions(subject);\nCREATE INDEX IF NOT EXISTS idx_questions_chapter ON questions(subject, chapter);\nCREATE INDEX IF NOT EXISTS idx_quiz_records_created ON quiz_records(created_at);\nCREATE INDEX IF NOT EXISTS idx_quiz_records_subject ON quiz_records(subject);\nCREATE INDEX IF NOT EXISTS idx_wrong_book_subject ON wrong_book(subject);\nCREATE INDEX IF NOT EXISTS idx_wrong_book_mastered ON wrong_book(mastered);\n\nALTER TABLE questions ENABLE ROW LEVEL SECURITY;\nALTER TABLE quiz_records ENABLE ROW LEVEL SECURITY;\nALTER TABLE wrong_book ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Allow all on questions\" ON questions FOR ALL USING (true);\nCREATE POLICY \"Allow all on quiz_records\" ON quiz_records FOR ALL USING (true);\nCREATE POLICY \"Allow all on wrong_book\" ON wrong_book FOR ALL USING (true);\n\n""")
     
     by_subject = defaultdict(list)
     for q in questions:

@@ -295,3 +295,141 @@ function recordResult(q: Question, userAnswer: string, isCorrect: boolean): void
   }
   void syncWrongBookToDB(q, userAnswer, isCorrect);
 }
+
+function showFeedback(q: Question, userAnswer: string, isCorrect: boolean): void {
+  const st = quizState;
+  if (!st) return;
+  const correctAnswer = formatCorrectAnswer(q.type, q.answer).toUpperCase();
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) submitBtn.style.display = 'none';
+  const feedback = document.getElementById('feedbackArea');
+  if (feedback) feedback.innerHTML = `
+    <div class="feedback-banner ${isCorrect ? 'correct' : 'wrong'}">
+      <span>${isCorrect ? '✓ 回答正确！' : '✗ 回答错误'}</span>
+    </div>
+    ${q.explanation ? `<div class="explanation-box"><div class="exp-label">正确答案：${correctAnswer}</div><div class="exp-text">${formatMath(q.explanation)}</div></div>` : `<div class="explanation-box"><div class="exp-label">正确答案：${correctAnswer}</div></div>`}
+    <div style="padding:0 16px">
+      <button class="btn btn-primary mt-16" onclick="nextQuestion()">${st.index + 1 < st.total ? '下一题' : '查看结果'}</button>
+    </div>
+  `;
+}
+
+export function nextQuestion(): void {
+  const st = quizState;
+  if (!st) return;
+  st.index++;
+  renderQuestion();
+  const content = document.getElementById('quizContent');
+  if (content) content.scrollIntoView({ behavior: 'smooth' });
+}
+
+export function quitQuiz(): void {
+  const st = quizState;
+  if (!st || st.correct + st.wrong === 0) {
+    pendingEssay = null;
+    setQuizState(null);
+    switchPage('home');
+    return;
+  }
+  renderQuitSummary();
+}
+
+function renderQuitSummary(): void {
+  const st = quizState;
+  if (!st) return;
+  pendingEssay = null;
+  const answered = st.correct + st.wrong;
+  const remaining = st.total - answered;
+  const accuracy = Math.round((st.correct / answered) * 100);
+  const content = document.getElementById('quizContent');
+  if (!content) return;
+  content.innerHTML = `
+    <div class="result-hero">
+      <div class="msg">✓ 已答 ${answered} 题，作答记录已保存</div>
+    </div>
+    <div class="result-grid">
+      <div class="result-item"><div class="num">${answered}</div><div class="lbl">已答题</div></div>
+      <div class="result-item"><div class="num text-success">${st.correct}</div><div class="lbl">正确</div></div>
+      <div class="result-item"><div class="num text-danger">${st.wrong}</div><div class="lbl">错误</div></div>
+    </div>
+    <div class="accuracy-ring"><div class="pct">${accuracy}%</div><div class="lbl">正确率</div></div>
+    <div style="padding:0 16px">
+      ${remaining > 0 ? `<button class="btn btn-primary" onclick="resumeQuiz()">继续作答（剩 ${remaining} 题）</button>` : ''}
+      <button class="btn btn-outline mt-8" onclick="confirmQuit()">返回首页</button>
+    </div>
+  `;
+  const fill = document.getElementById('progressFill');
+  if (fill) fill.style.width = ((answered / st.total) * 100) + '%';
+}
+
+export function resumeQuiz(): void {
+  const st = quizState;
+  if (!st) return;
+  if (st.index < st.correct + st.wrong) st.index++;
+  renderQuestion();
+  const content = document.getElementById('quizContent');
+  if (content) content.scrollIntoView({ behavior: 'smooth' });
+}
+
+export function confirmQuit(): void {
+  pendingEssay = null;
+  setQuizState(null);
+  switchPage('home');
+}
+
+export function finishQuiz(): void {
+  const correct = quizState?.correct || 0;
+  const wrong = quizState?.wrong || 0;
+  const total = quizState?.total || 0;
+  const subject = quizState?.subject || '';
+  const subjectName = quizState?.subjectName || '';
+  setQuizState(null);
+  const resultEl = document.getElementById('quizContent');
+  if (!resultEl) return;
+  resultEl.dataset.subject = subject;
+  resultEl.dataset.subjectName = subjectName;
+  const accuracy = total > 0 ? Math.round(correct / total * 100) : 0;
+  let stars = 1, msg = '继续加油！';
+  if (accuracy >= 90) { stars = 5; msg = '太棒了！掌握得非常好！'; }
+  else if (accuracy >= 80) { stars = 4; msg = '很不错，再巩固一下薄弱点！'; }
+  else if (accuracy >= 60) { stars = 3; msg = '还可以，需要加强练习！'; }
+  else if (accuracy >= 40) { stars = 2; msg = '基础还有些薄弱，多刷题！'; }
+
+  resultEl.innerHTML = `
+    <div class="result-hero">
+      <div class="stars">${'★'.repeat(stars).split('').map(() => '<span class="star-on">★</span>').join('')}${'★'.repeat(5 - stars)}</div>
+      <div class="msg">${msg}</div>
+    </div>
+    <div class="result-grid">
+      <div class="result-item"><div class="num">${total}</div><div class="lbl">总题数</div></div>
+      <div class="result-item"><div class="num text-success">${correct}</div><div class="lbl">正确</div></div>
+      <div class="result-item"><div class="num text-danger">${wrong}</div><div class="lbl">错误</div></div>
+    </div>
+    <div class="accuracy-ring"><div class="pct">${accuracy}%</div><div class="lbl">正确率</div></div>
+    <div style="padding:0 16px">
+      <button class="btn btn-primary" onclick="switchPage('home')">继续刷题</button>
+      ${wrong > 0 ? `<button class="btn btn-outline mt-8" onclick="retryWrong()">重做错题 (${wrong}题)</button>` : ''}
+    </div>
+  `;
+  const fill = document.getElementById('progressFill');
+  const prog = document.getElementById('quizProgress');
+  if (fill) fill.style.width = '100%';
+  if (prog) prog.textContent = `${total}/${total}`;
+}
+
+export function retryWrong(): void {
+  const resultEl = document.getElementById('quizContent');
+  if (!resultEl) return;
+  const subject = resultEl.dataset.subject || '';
+  const subjectName = resultEl.dataset.subjectName || '';
+  const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []).filter(q => q.subject === subject && !q.mastered);
+  if (wrongBook.length === 0) { toast('没有错题'); return; }
+  setQuizState({ subject, subjectName, questions: wrongBook, index: 0, correct: 0, wrong: 0, total: wrongBook.length });
+  const title = document.getElementById('quizTitle');
+  if (title) title.textContent = subjectName ? subjectName + ' · 错题重做' : '错题重做';
+  const fill = document.getElementById('progressFill');
+  const prog = document.getElementById('quizProgress');
+  if (fill) fill.style.width = '0%';
+  if (prog) prog.textContent = '0/' + wrongBook.length;
+  renderQuestion();
+}

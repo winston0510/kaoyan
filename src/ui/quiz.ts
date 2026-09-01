@@ -40,6 +40,7 @@ export async function startQuiz(btn: HTMLButtonElement): Promise<void> {
   const inScope = (ch: string) => scopeChapters === null || scopeChapters.includes(ch);
 
   let questions: Question[] = [];
+  let allAnswered = false;
   if (mode === 'wrong') {
     questions = getLocal<WrongBookItem[]>('wrongBook', []).filter(q => q.subject === subjectId && !q.mastered && inScope(q.chapter));
   } else {
@@ -51,12 +52,19 @@ export async function startQuiz(btn: HTMLButtonElement): Promise<void> {
       const unmasteredIds = new Set(getLocal<WrongBookItem[]>('wrongBook', []).filter(w => !w.mastered).map(w => String(w.id)));
       questions = questions.filter(q => !correctIds.has(String(q.id)) || unmasteredIds.has(String(q.id)));
     }
+    if (mode === 'continue') {
+      const scopedCount = questions.length;
+      const records = getLocal<QuizRecord[]>('records', []);
+      const answeredIds = new Set(records.filter(r => r.question_id !== null).map(r => String(r.question_id)));
+      questions = questions.filter(q => !answeredIds.has(String(q.id)));
+      if (questions.length === 0 && scopedCount > 0) allAnswered = true;
+    }
     if (mode === 'random') questions = shuffle(questions);
   }
   questions = questions.slice(0, count);
 
   if (questions.length === 0) {
-    toast(scopeChapters !== null ? '当前范围内暂无可刷题目' : '该科目暂无题目，请先添加题目');
+    toast(allAnswered ? '题目已全部刷完，试试「错题重做」或更换范围' : (scopeChapters !== null ? '当前范围内暂无可刷题目' : '该科目暂无题目，请先添加题目'));
     btn.disabled = false;
     btn.textContent = '开始刷题';
     return;

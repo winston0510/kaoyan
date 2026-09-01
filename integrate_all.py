@@ -2,6 +2,7 @@ import re
 import json
 import os
 from collections import defaultdict, Counter
+from chapter_classifier import fix_chapter
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 PARENT = os.path.dirname(BASE)
@@ -14,7 +15,7 @@ def esc(s):
 def normalize_question(q):
     q = re.sub(r'<[^>]+>', '', q)
     q = re.sub(r'\s+', '', q)
-    q = re.sub(r'[，。、？！（）；：""''【】《》〈〉「」『』()（）]', '', q)
+    q = re.sub(r'[，。、？！（）；：“”‘’【】《》〈〉「」『』()（）]', '', q)
     q = q.lower()
     return q[:80]
 
@@ -272,6 +273,9 @@ parse_pg_sql(os.path.join(BASE, 'seed_real_circuit.sql'), '', inline_source=True
 
 parse_kyzz_sql(os.path.join(PARENT, 'kyzz_question.sql'))
 parse_maogai_json(os.path.join(PARENT, 'maogai_all.json'))
+
+for q in questions:
+    q['chapter'] = fix_chapter(q['subject'], q['chapter'], q['question'])
 
 print(f"\n=== 去重统计 ===")
 total_in = 0

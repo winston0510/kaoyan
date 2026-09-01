@@ -16,7 +16,7 @@
 - **验证**：种子 3 个 INSERT 块、行数 140、选项 JSON 反斜杠 0；`_scan_json.py` 全库扫描 TOTAL 11628 BAD 0；build（含 tsc）通过（产物 `index-5bLCMhYt.js` 592.80 kB / `index-B5sdtsNa.css`）。
 - **数据导入**：Supabase 导入 234 块全绿（`OK=234 Failed=0`），DB 总量 **11,628**（政治 6,618 / 数学二 2,087 / 电路 1,649 / 英语二 1,274）；来源核验：2015-2019 真题风格题每年 60（数学/英语 46 + 电路 14）、2020-2024 每年 14（电路）；新增 140 题线上即刻可刷。
 - **部署（受阻）**：`dist-deploy.zip`（70 文件，1,092,948 B）就绪；Netlify 部署被账户额度阻断（`Account credit usage exceeded - new deploys are blocked until credits are added`），重试确认非瞬时；补发步骤：充值后重跑 `_netlify_deploy_v420.ps1` + 新建 `_netlify_poll_v455.ps1`（bundle `index-5bLCMhYt.js`）轮询验证。数据已先行导入，新题在现有 v4.5.4 前端即刻可刷。
-- **GitHub 同步**：sw.js+constants.ts（`77cf1d6`）、integrate_all.py（`184e633`）、gen_real_circuit.js（`33e0602`）、CHANGELOG 精要条目（`fd2e70c`→本提交，期间多次修复节丢失并将旧版本节压缩精要）；seed_real_circuit.sql（41.1 KB）超 MCP 单次推送上限，不入 GitHub，权威记录以本地为准。
+- **GitHub 同步**：sw.js+constants.ts（`77cf1d6`）、integrate_all.py（`184e633`）、gen_real_circuit.js（`33e0602`）、CHANGELOG 精要定稿（`feee560`，期间多次修复节丢失并将旧版本节压缩精要，压缩前原文见 `d756221`）、integrate_all.py 等价重构修复（`f93f9ac`：三引号 schema 块改行数组拼接，修复批2 推送损坏，重跑输出与修复前逐字节一致）；`_verify_gh_v455.cjs` 验证 ALL_OK；seed_real_circuit.sql（41.1 KB）超 MCP 单次推送上限，不入 GitHub，权威记录以本地为准。
 
 ---
 

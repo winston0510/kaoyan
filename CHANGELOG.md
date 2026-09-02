@@ -14,7 +14,7 @@
 - **过滤逻辑**（`src/ui/quiz.ts` `startQuiz`）：新增 `continue` 分支——以 `kaoyan_records` 中 `question_id` 非空的记录构建 `answeredIds` 集合，凡 id 在集合中即剔除；新增 `allAnswered` 标志，范围内题目全部答完时空态精确提示「题目已全部刷完，试试「错题重做」或更换范围」。
 - **版本**：APP_VERSION v4.6.1→v4.7.0，sw 缓存 `kaoyan-v4.7.0`。
 - **验证**：typecheck / 34 项测试 / build（`index-D-PlKLHS.js` 594.56 kB）全过；冒烟 `NODE_EXIT=0`（MODES=4、版本 v4.7.0、零报错）；专项 `_verify_continue_v470.cjs` 六断言全绿 `VERIFY_EXIT=0`（弹窗选项文案、顺序跳过已答 1-3 首题=4、故意答错→错题本 +1、再开继续首题=5 答错也跳过、零 JS 报错；演示题库无 id，故注入 8 道带 id 题验证）。
-- **部署（阻断）**：Netlify 被账户额度阻断（403 `Account credit usage exceeded`，最小 zip 探测确认）；`dist-deploy.zip`（70 文件 / 0 反斜杠 / 1,093,247 B）已就绪，待额度恢复重发；线上暂保持 v4.5.4。
+- **部署（已完成）**：已迁移至 Vercel 部署（域名暂不记录）；`dist-deploy.zip`（70 文件 / 0 反斜杠 / 1,093,247 B）存档；Netlify 账户额度阻断（403 `Account credit usage exceeded`）为历史记录，以本地 `release_v4.7.0.changelog.log` 为准。
 - **GitHub 同步**：constants+sw+subject（`0887014`）、quiz.ts（`1810b5a`）、CHANGELOG（本提交）。
 
 ---

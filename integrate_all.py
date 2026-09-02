@@ -15,7 +15,7 @@ def esc(s):
 def normalize_question(q):
     q = re.sub(r'<[^>]+>', '', q)
     q = re.sub(r'\s+', '', q)
-    q = re.sub(r'[，。、？！（）；：“”‘’【】《》〈〉「」『』()（）]', '', q)
+    q = re.sub(r'[，。、？！（）；：""''【】《》〈〉「」『』()（）]', '', q)
     q = q.lower()
     return q[:80]
 
@@ -310,7 +310,7 @@ with open(output, 'w', encoding='utf-8') as f:
     for subj, cnt in sorted(subj_counts.items()):
         names = {'math2': '数学二', 'circuit': '电路', 'english2': '英语二', 'politics': '政治'}
         f.write(f"--   {names.get(subj, subj)}: {cnt}题\n")
-    f.write("-- ============================================\n\n")
+    f.write("-- ============================================ \n\n")
     
     schema_lines = [
         '-- 数据库表结构',
@@ -375,9 +375,9 @@ with open(output, 'w', encoding='utf-8') as f:
         qs = by_subject[subj]
         if not qs:
             continue
-        f.write(f"-- ============================================\n")
+        f.write(f"-- ============================================ \n")
         f.write(f"-- {subject_names[subj]} ({len(qs)}题)\n")
-        f.write(f"-- ============================================\n\n")
+        f.write(f"-- ============================================ \n\n")
         batch_size = 50
         for i in range(0, len(qs), batch_size):
             batch = qs[i:i+batch_size]

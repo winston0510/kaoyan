@@ -129,4 +129,54 @@
       <div class="form-group"><label>Supabase URL</label><input type="text" id="supabaseUrl" placeholder="https://xxxxx.supabase.co"></div>
       <div class="form-group"><label>Supabase Anon Key</label><input type="text" id="supabaseKey" placeholder="eyJhbGciOi..."></div>
       <button class="btn btn-primary mt-8" onclick="saveConfig()">保存并连接</button>
-      <button class="btn btn-outline mt-8" onclick="loadDemoData()" id="btnLoad
+      <button class="btn btn-outline mt-8" onclick="loadDemoData()" id="btnLoadDemo">加载示例数据（本地模式）</button>
+      <div id="configStatus" style="font-size:.75rem;margin-top:8px;text-align:center"></div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:.9375rem;font-weight:700;margin-bottom:12px">添加题目</h3>
+      <div class="form-group"><label>科目</label><select id="addSubject"><option value="politics">政治</option><option value="english2">英语二</option><option value="math2">数学二</option><option value="circuit">电路（北交大）</option></select></div>
+      <div class="form-group"><label>章节</label><input type="text" id="addChapter" placeholder="如：马原 / 高等数学 / 阅读理解"></div>
+      <div class="form-group"><label>题型</label><select id="addType"><option value="single">单选题</option><option value="multiple">多选题</option><option value="judge">判断题</option><option value="fill">填空题</option><option value="essay">简答题</option></select></div>
+      <div class="form-group"><label>题目</label><textarea id="addQuestion" placeholder="输入题目内容"></textarea></div>
+      <div class="form-group"><label>选项</label><div id="optionInputs"><div class="option-input-row"><span class="opt-letter">A</span><input type="text" placeholder="选项 A"><span class="opt-del" onclick="delOption(this)">×</span></div><div class="option-input-row"><span class="opt-letter">B</span><input type="text" placeholder="选项 B"><span class="opt-del" onclick="delOption(this)">×</span></div><div class="option-input-row"><span class="opt-letter">C</span><input type="text" placeholder="选项 C"><span class="opt-del" onclick="delOption(this)">×</span></div><div class="option-input-row"><span class="opt-letter">D</span><input type="text" placeholder="选项 D"><span class="opt-del" onclick="delOption(this)">×</span></div></div><button class="btn btn-sm btn-outline mt-8" onclick="addOption()">+ 添加选项</button></div>
+      <div class="form-group"><label>正确答案</label><input type="text" id="addAnswer" placeholder="A 或 AB（多选）；填空题可用 | 分隔多个可接受答案；简答题填参考答案"></div>
+      <div class="form-group"><label>解析（可选）</label><textarea id="addExplanation" placeholder="题目解析"></textarea></div>
+      <button class="btn btn-primary" onclick="addQuestion()">添加题目</button>
+    </div>
+    <div class="card">
+      <h3 style="font-size:.9375rem;font-weight:700;margin-bottom:12px">批量导入 JSON</h3>
+      <div class="json-import" onclick="document.getElementById('jsonFile').click()">
+        <div class="import-icon">📂</div><div class="import-text">点击选择 JSON 文件导入</div>
+      </div>
+      <input type="file" id="jsonFile" accept=".json" style="display:none" onchange="importJson(event)">
+      <div id="importResult" style="font-size:.75rem;margin-top:8px;text-align:center"></div>
+    </div>
+    <div class="card" style="text-align:center;font-size:.75rem;color:var(--text-secondary)" id="appVersion"></div>
+  </div>
+
+  <!-- ====== Bottom Nav ====== -->
+  <div class="bottom-nav" id="bottomNav">
+    <div class="nav-item active" data-page="home" onclick="switchPage('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2H15C17 2 21 3 21 6V22L20 21L18 22L16 21L14 22L12 21L10 22L8 21L6 22L4 21L3 22V6C3 3 7 2 9 2Z"/></svg>
+      <span>刷题</span>
+    </div>
+    <div class="nav-item" data-page="knowledge" onclick="switchPage('knowledge')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5V19.5ZM4 19.5A2.5 2.5 0 0 0 6.5 22H20V17"/></svg>
+      <span>知识库</span>
+    </div>
+    <div class="nav-item" data-page="favorites" onclick="switchPage('favorites')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+      <span>收藏</span>
+    </div>
+    <div class="nav-item" data-page="wrongbook" onclick="switchPage('wrongbook')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8V12M12 16h.01"/></svg>
+      <span>错题本</span>
+    </div>
+    <div class="nav-item" data-page="stats" onclick="switchPage('stats')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20V14"/></svg>
+      <span>统计</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

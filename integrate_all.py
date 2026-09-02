@@ -252,7 +252,7 @@ def parse_maogai_json(filepath):
         count += 1
     print(f"{os.path.basename(filepath)}: parsed {count} rows")
 
-print("=== 开始解析所有题库文件 ===\n")
+print("=== 开始解析所有题库文件 ===")
 
 parse_pg_sql(os.path.join(BASE, 'seed_all.sql'), '')
 parse_politics_sql(os.path.join(BASE, 'seed_politics_new.sql'), '政治多源题库')
@@ -304,13 +304,13 @@ for src, cnt in source_counts.most_common(20):
 
 output = os.path.join(BASE, 'seed_all_final.sql')
 with open(output, 'w', encoding='utf-8') as f:
-    f.write("-- ============================================\n")
+    f.write("-- " + "=" * 44 + "\n")
     f.write("-- 考研刷题工具 - 完整数据库 (含来源字段)\n")
     f.write(f"-- 总题量: {len(questions)}题\n")
     for subj, cnt in sorted(subj_counts.items()):
         names = {'math2': '数学二', 'circuit': '电路', 'english2': '英语二', 'politics': '政治'}
         f.write(f"--   {names.get(subj, subj)}: {cnt}题\n")
-    f.write("-- ============================================ \n\n")
+    f.write("-- " + "=" * 44 + "\n\n")
     
     schema_lines = [
         '-- 数据库表结构',
@@ -375,9 +375,9 @@ with open(output, 'w', encoding='utf-8') as f:
         qs = by_subject[subj]
         if not qs:
             continue
-        f.write(f"-- ============================================ \n")
+        f.write("-- " + "=" * 44 + "\n")
         f.write(f"-- {subject_names[subj]} ({len(qs)}题)\n")
-        f.write(f"-- ============================================ \n\n")
+        f.write("-- " + "=" * 44 + "\n\n")
         batch_size = 50
         for i in range(0, len(qs), batch_size):
             batch = qs[i:i+batch_size]

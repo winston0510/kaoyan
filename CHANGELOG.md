@@ -13,7 +13,7 @@
 - **判断题选项污染修复**：`mk()` 为 4 选项单选题函数，wrongs 不足 3 个时以随机数字补位，判断题（2 选项）选项被污染；新增 `mkj(correct, wrongs)` 2 选项专用函数，数学二 20 条 judge、电路 10 处 judge 全量改用；seed 重生成 + Supabase 全量重导 `OK=234 Failed=0`，线上总计 11,628 题、judge 238 条全部标准 2 选项。
 - **新增高等数学十八讲知识主题**（src/data/knowledge-data.ts)：独立主题 `gaoshu-18-lectures`「高等数学十八讲」，参考清华孝哥《高数十八讲》总结框架整理，覆盖数二范围第 1~15 讲（极限与连续 / 一元函数微分学 / 一元函数积分学 / 多元函数与微分方程四大模块），App「知识库」页签独立主题查看。
 - **版本**：APP_VERSION v4.7.0→v4.8.0，sw 缓存 `kaoyan-v4.8.0`。
-- **GitHub 同步**：knowledge-data + constants + sw（`850f26da`）、CHANGELOG（本提交）。
+- **GitHub 同步**：css+constants（`3f697376`）、knowledge-data（`850f26da`）、数学二/电路/数据结构生成器（`96e86db6`）、英语二/政治生成器（`47b09b59`）、CHANGELOG（本提交）。
 
 ---
 

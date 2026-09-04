@@ -184,7 +184,7 @@ button{cursor:pointer;border:none;background:none;color:inherit}
 .chapter-card .cc-progress{font-size:.6875rem;color:var(--text-light);white-space:nowrap}
 .chapter-card .cc-empty{font-size:.6875rem;color:var(--text-light);white-space:nowrap}
 
-.search-box{margin:12px 16px 0;position:relative}
+.search-box{margin:12px 16px 10px;position:relative}
 .search-box input{width:100%;padding:11px 40px 11px 14px;border:none;border-radius:var(--radius);background:var(--fill);color:var(--text);font-size:1rem;outline:none;transition:box-shadow .15s}
 .search-box input::placeholder{color:var(--text-light)}
 .search-box input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 22%,transparent)}

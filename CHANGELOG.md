@@ -6,6 +6,17 @@
 
 ---
 
+## v4.8.0（2026-09-04）UI 重叠修复 + 判断题选项污染修复 + 新增高等数学十八讲知识主题（精要压缩版）
+
+> 完整记录见本地 `CHANGELOG.md` v4.8.0 节与 `release_v4.8.0.changelog.log`。
+- **UI 重叠修复**（css/style.css）：首页搜索栏与政治卡片顶部重叠，`.search-box{margin:12px 16px 10px}` 贴死，GAP=10px 验证通过。
+- **判断题选项污染修复**：`mk()` 为 4 选项单选题函数，wrongs 不足 3 个时以随机数字补位，判断题（2 选项）选项被污染；新增 `mkj(correct, wrongs)` 2 选项专用函数，数学二 20 条 judge、电路 10 处 judge 全量改用；seed 重生成 + Supabase 全量重导 `OK=234 Failed=0`，线上总计 11,628 题、judge 238 条全部标准 2 选项。
+- **新增高等数学十八讲知识主题**（src/data/knowledge-data.ts)：独立主题 `gaoshu-18-lectures`「高等数学十八讲」，参考清华孝哥《高数十八讲》总结框架整理，覆盖数二范围第 1~15 讲（极限与连续 / 一元函数微分学 / 一元函数积分学 / 多元函数与微分方程四大模块），App「知识库」页签独立主题查看。
+- **版本**：APP_VERSION v4.7.0→v4.8.0，sw 缓存 `kaoyan-v4.8.0`。
+- **GitHub 同步**：knowledge-data + constants + sw（`850f26da`）、CHANGELOG（本提交）。
+
+---
+
 ## v4.7.0（2026-09-01）新增「继续刷题」模式：按顺序做题，跳过所有已答题目（精要压缩版）
 
 > 完整记录见本地 `CHANGELOG.md` v4.7.0 节与 `release_v4.7.0.changelog.log`。

@@ -19,8 +19,13 @@ const SUB_MAP: Record<string, string> = {
   '₆': '<sub>6</sub>', '₇': '<sub>7</sub>', '₈': '<sub>8</sub>', '₉': '<sub>9</sub>', '₀': '<sub>0</sub>'
 };
 
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+export function esc(s: unknown): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function applySupSub(s: string): string {
@@ -34,7 +39,7 @@ function renderTex(tex: string, displayMode: boolean): string {
   try {
     return katex.renderToString(tex, { throwOnError: false, displayMode });
   } catch {
-    return escapeHtml(tex);
+    return esc(tex);
   }
 }
 
@@ -47,7 +52,7 @@ export function formatMath(str: string): string {
   MATH_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = MATH_RE.exec(str)) !== null) {
-    out += applySupSub(escapeHtml(str.slice(last, m.index)));
+    out += applySupSub(esc(str.slice(last, m.index)));
     if (m[1] !== undefined) {
       out += '<span class="math-block">' + renderTex(m[1].trim(), true) + '</span>';
     } else {
@@ -55,7 +60,7 @@ export function formatMath(str: string): string {
     }
     last = m.index + m[0].length;
   }
-  out += applySupSub(escapeHtml(str.slice(last)));
+  out += applySupSub(esc(str.slice(last)));
   return out;
 }
 

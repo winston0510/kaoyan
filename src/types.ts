@@ -25,6 +25,7 @@ export interface Question {
   explanation?: string;
   difficulty?: number;
   source?: string;
+  dedup_key?: string;
   created_at?: string;
   userAnswer?: string;
   mastered?: boolean;

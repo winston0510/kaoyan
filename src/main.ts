@@ -1,5 +1,5 @@
 import 'katex/dist/katex.min.css';
-import { initSupabase, pullFromDB, saveConfig, syncQuestionsFromDB } from './api';
+import { initSupabase, pullFromDB, saveConfig } from './api';
 import { APP_VERSION } from './constants';
 import { renderHome, selectMode } from './ui/home';
 import { openQuizModal, openSubject, renderSubject } from './ui/subject';
@@ -65,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   registerSW();
   initSupabase();
-  void syncQuestionsFromDB();
   void pullFromDB();
   renderHome();
 

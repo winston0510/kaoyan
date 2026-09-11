@@ -1,12 +1,13 @@
 import { SUBJECTS, TYPE_LABELS } from '../constants';
-import { db, setQuizState } from '../state';
-import { getLocal, setLocal } from '../storage';
-import { formatMath } from '../utils';
+import { setQuizState } from '../state';
+import { ensureAllQuestions } from '../api';
+import { formatMath, esc } from '../utils';
 import { switchPage } from './navigation';
 import { renderQuestion } from './quiz';
 import type { Question } from '../types';
 
 let searchResults: Question[] = [];
+let searchSeq = 0;
 
 function searchHit(q: Question, kw: string): boolean {
   return [q.question, q.chapter, q.source || '', q.explanation || '', ...(q.options || [])]
@@ -20,11 +21,12 @@ export async function doSearch(): Promise<void> {
   if (!box) return;
   if (!kw) { box.style.display = 'none'; return; }
 
-  let list = getLocal<Question[]>('questions', []);
-  if (list.length === 0 && db) {
-    const { data } = await db.from('questions').select('*');
-    if (data) { list = data as Question[]; setLocal('questions', list); }
-  }
+  const seq = ++searchSeq;
+  box.innerHTML = '<div class="subject-loading">搜索中…</div>';
+  box.style.display = '';
+
+  const list = await ensureAllQuestions();
+  if (seq !== searchSeq) return;
   searchResults = list.filter(q => searchHit(q, kw)).slice(0, 50);
 
   if (searchResults.length === 0) {
@@ -38,7 +40,7 @@ export async function doSearch(): Promise<void> {
       const s = SUBJECTS.find(x => x.id === q.subject);
       const typeLabel = TYPE_LABELS[q.type] || '';
       return `<div class="search-result" onclick="startSearchQuiz(${i})">
-        <div><span class="tag tag-amber">${s ? s.name : q.subject}</span><span class="tag tag-gray">${typeLabel}</span>${q.chapter ? `<span class="tag tag-gray">${q.chapter}</span>` : ''}</div>
+        <div><span class="tag tag-amber">${s ? s.name : esc(q.subject)}</span><span class="tag tag-gray">${typeLabel}</span>${q.chapter ? `<span class="tag tag-gray">${esc(q.chapter)}</span>` : ''}</div>
         <div class="sr-title">${formatMath(q.question)}</div>
       </div>`;
     }).join('');

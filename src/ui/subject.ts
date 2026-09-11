@@ -1,8 +1,10 @@
 import { SUBJECTS } from '../constants';
 import { getLocal } from '../storage';
+import { answerState } from '../progress';
+import { esc } from '../utils';
 import { loadQuestions } from '../api';
 import { switchPage } from './navigation';
-import type { QuizRecord, WrongBookItem } from '../types';
+import type { WrongBookItem } from '../types';
 
 let currentSubject = '';
 
@@ -25,18 +27,22 @@ export async function renderSubject(): Promise<void> {
 
   content.innerHTML = '<div class="subject-loading">加载中…</div>';
 
-  const questions = await loadQuestions(currentSubject);
-  const records = getLocal<QuizRecord[]>('records', []).filter(r => r.subject === currentSubject);
+  const questions = await loadQuestions(currentSubject).catch(() => null);
+  if (questions === null) {
+    content.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">题库加载失败</div><div class="empty-desc">请检查网络后返回重试</div></div>';
+    return;
+  }
+  const state = answerState();
   const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []).filter(w => w.subject === currentSubject && !w.mastered);
 
-  const practicedIds = new Set(records.filter(r => r.question_id !== null).map(r => String(r.question_id)));
+  const practicedIds = (id?: number | string) => id !== undefined && state[String(id)] !== undefined;
 
   const stats = new Map<string, ChapterStat>();
   for (const q of questions) {
     let st = stats.get(q.chapter);
     if (!st) { st = { name: q.chapter, total: 0, practiced: 0, wrong: 0 }; stats.set(q.chapter, st); }
     st.total += 1;
-    if (q.id !== undefined && practicedIds.has(String(q.id))) st.practiced += 1;
+    if (practicedIds(q.id)) st.practiced += 1;
   }
   for (const w of wrongBook) {
     const st = stats.get(w.chapter || '');
@@ -78,7 +84,7 @@ export async function renderSubject(): Promise<void> {
     const secPracticed = sec.stats.reduce((a, c) => a + c.practiced, 0);
     const secWrong = sec.stats.reduce((a, c) => a + c.wrong, 0);
     const headerHtml = `<div class="section-header">
-      <div class="section-title">${sec.name}</div>
+      <div class="section-title">${esc(sec.name)}</div>
       <div class="section-meta">
         ${secWrong > 0 ? `<span class="wrong-badge">${secWrong} 未掌握</span>` : ''}
         <span class="section-stats">${secPracticed}/${secTotal} 已练</span>
@@ -86,7 +92,7 @@ export async function renderSubject(): Promise<void> {
       </div>
     </div>`;
     const cardsHtml = sec.stats.map(c => `<div class="chapter-card" onclick="openQuizModal('${s.id}', '${escAttr(c.name)}', '')">
-      <div class="cc-name">${c.name}</div>
+      <div class="cc-name">${esc(c.name)}</div>
       <div class="cc-meta">
         ${c.wrong > 0 ? `<span class="wrong-badge">${c.wrong} 未掌握</span>` : ''}
         ${c.total === 0 ? '<span class="cc-empty">暂无题目</span>' : `<span class="cc-progress">${c.practiced}/${c.total} 已练</span>`}

@@ -1,18 +1,16 @@
 import { SUBJECTS } from '../constants';
 import { getLocal } from '../storage';
-import { todayKey } from '../storage';
-import { calcStreak, studyDays } from '../streak';
+import { calcStreak, dateKey, studyDays } from '../streak';
 import type { QuizRecord, WrongBookItem } from '../types';
 
 export function renderStats(): void {
   const records = getLocal<QuizRecord[]>('records', []);
-  const today = todayKey();
-  const todayStats = getLocal<{ total: number; correct: number }>('today_' + today, { total: 0, correct: 0 });
 
   let totalQ = 0, totalC = 0;
   const dayMap: Record<string, { total: number; correct: number }> = {};
   records.forEach(r => {
-    const d = r.created_at ? r.created_at.split('T')[0] : '';
+    const parsed = r.created_at ? new Date(r.created_at) : null;
+    const d = parsed && !isNaN(parsed.getTime()) ? dateKey(parsed) : '';
     if (d) {
       if (!dayMap[d]) dayMap[d] = { total: 0, correct: 0 };
       dayMap[d].total++;
@@ -36,7 +34,7 @@ export function renderStats(): void {
   const now = new Date();
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-    const ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const ds = dateKey(d);
     const stat = dayMap[ds] || { total: 0, correct: 0 };
     weekTotal += stat.total;
     const acc = stat.total > 0 ? Math.round(stat.correct / stat.total * 100) : 0;

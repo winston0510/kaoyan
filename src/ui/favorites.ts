@@ -2,7 +2,7 @@ import { SUBJECTS, TYPE_LABELS } from '../constants';
 import { getLocal, setLocal } from '../storage';
 import { setQuizState } from '../state';
 import { syncFavoriteToDB } from '../api';
-import { toast, formatMath } from '../utils';
+import { toast, formatMath, esc } from '../utils';
 import { switchPage } from './navigation';
 import { renderQuestion, invalidateFavIds } from './quiz';
 import type { FavoriteItem } from '../types';
@@ -34,7 +34,7 @@ export function renderFavorites(): void {
   const listHtml = list.map(q => {
     const typeLabel = TYPE_LABELS[q.type] || '';
     return `<div class="fav-card" data-id="${q.id}">
-      <div class="wc-header"><span class="tag tag-gray">${typeLabel}</span><span class="tag tag-amber">${favTitle(q.subject)} · ${q.chapter || ''}</span></div>
+      <div class="wc-header"><span class="tag tag-gray">${typeLabel}</span><span class="tag tag-amber">${favTitle(q.subject)} · ${esc(q.chapter || '')}</span></div>
       <div class="fav-question">${formatMath(q.question)}</div>
       <div class="fav-actions">
         <button class="btn btn-sm btn-outline" onclick="startFavQuiz()">开始作答</button>

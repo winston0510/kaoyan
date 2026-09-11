@@ -5,13 +5,12 @@ import type { WrongBookItem } from '../types';
 
 export function renderHome(): void {
   const today = getLocal<{ total: number; correct: number }>('today_' + todayKey(), { total: 0, correct: 0 });
-  const tToday = today || { total: 0, correct: 0 };
   const el1 = document.getElementById('todayTotal');
   const el2 = document.getElementById('todayCorrect');
   const el3 = document.getElementById('todayRate');
-  if (el1) el1.textContent = String(tToday.total);
-  if (el2) el2.textContent = String(tToday.correct);
-  if (el3) el3.textContent = tToday.total > 0 ? Math.round(tToday.correct / tToday.total * 100) + '%' : '-';
+  if (el1) el1.textContent = String(today.total);
+  if (el2) el2.textContent = String(today.correct);
+  if (el3) el3.textContent = today.total > 0 ? Math.round(today.correct / today.total * 100) + '%' : '-';
   const el4 = document.getElementById('todayStreak');
   if (el4) el4.textContent = String(calcStreak(studyDays()));
   const sub = document.getElementById('homeSub');

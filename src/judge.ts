@@ -24,6 +24,10 @@ export function judgeAnswer(type: Question['type'], userAnswer: string, correctA
   return userAnswer.trim().toUpperCase() === correctAnswer.trim().toUpperCase();
 }
 
+export function answerLetters(correctAnswer: string): string[] {
+  return (correctAnswer || '').toUpperCase().split('').filter(c => c >= 'A' && c <= 'Z');
+}
+
 export function formatCorrectAnswer(type: Question['type'], correctAnswer: string): string {
   if (type === 'fill') {
     return correctAnswer.split('|').map(c => c.trim()).filter(Boolean).join(' 或 ');

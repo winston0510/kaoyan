@@ -8,8 +8,13 @@ export function getLocal<T>(key: string, fallback: T): T {
   }
 }
 
-export function setLocal(key: string, val: unknown): void {
-  localStorage.setItem('kaoyan_' + key, JSON.stringify(val));
+export function setLocal(key: string, val: unknown): boolean {
+  try {
+    localStorage.setItem('kaoyan_' + key, JSON.stringify(val));
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 export function removeLocal(key: string): void {

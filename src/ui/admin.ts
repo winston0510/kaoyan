@@ -1,8 +1,18 @@
-import { addQuestionToDB } from '../api';
-import { db } from '../state';
+import { addQuestionToDB, insertQuestionsBatch } from '../api';
+import { questionsCache, setQuestionsCache } from '../state';
 import { getLocal, setLocal } from '../storage';
 import { toast } from '../utils';
+import { answerLetters } from '../judge';
 import type { Question } from '../types';
+
+function knownQuestions(): Question[] {
+  return questionsCache.length > 0 ? questionsCache : getLocal<Question[]>('questions', []);
+}
+
+function commitQuestions(list: Question[]): void {
+  setQuestionsCache(list);
+  setLocal('questions', list);
+}
 
 export function addOption(): void {
   const container = document.getElementById('optionInputs');
@@ -41,7 +51,16 @@ export async function addQuestion(): Promise<void> {
 
   const optionInputs = [...document.querySelectorAll<HTMLInputElement>('#optionInputs input')];
   const isInputType = type === 'fill' || type === 'essay';
-  const options = isInputType ? [] : optionInputs.map((inp, i) => String.fromCharCode(65 + i) + '. ' + inp.value.trim()).filter(o => o.length > 3);
+  const options = isInputType
+    ? []
+    : optionInputs.map(inp => inp.value.trim()).filter(v => v !== '').map((v, i) => String.fromCharCode(65 + i) + '. ' + v);
+
+  if (!isInputType) {
+    if (options.length < 2) { toast('该题型至少需要两个选项'); return; }
+    const letters = answerLetters(answer);
+    const outOfRange = letters.length === 0 || letters.some(l => l.charCodeAt(0) - 64 > options.length);
+    if (outOfRange) { toast('答案字母超出选项范围，选项请从 A 起连续填写'); return; }
+  }
 
   const q: Question = { subject, chapter, type, question, options, answer, explanation, difficulty: 1, created_at: new Date().toISOString() };
   if (await addQuestionToDB(q)) {
@@ -63,33 +82,25 @@ export function importJson(event: Event): void {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async (e: ProgressEvent<FileReader>) => {
+    const result = document.getElementById('importResult');
     try {
       const data = JSON.parse((e.target as FileReader).result as string);
-      const questions: Question[] = Array.isArray(data) ? data : (data.questions || []);
-      const all = getLocal<Question[]>('questions', []);
-      let added = 0;
-      questions.forEach(q => {
-        q.id = q.id || (Date.now() + Math.random());
-        q.created_at = q.created_at || new Date().toISOString();
-        if (!all.find(x => x.question === q.question && x.subject === q.subject)) {
-          all.push(q);
-          added++;
-        }
-      });
-      setLocal('questions', all);
-      const client = db;
-      if (client) {
-        for (const q of questions) {
-          await client.from('questions').upsert(q as never);
-        }
-      }
-      const result = document.getElementById('importResult');
-      if (result) result.textContent = `✅ 成功导入 ${added} 道题目`;
-      toast(`已导入 ${added} 道题目`);
-    } catch {
-      const result = document.getElementById('importResult');
-      if (result) result.textContent = '❌ JSON 格式错误';
-      toast('JSON 格式错误');
+      const incoming: Question[] = (((Array.isArray(data) ? data : data.questions) || []) as Question[]).filter(q => q && q.question);
+      const base = knownQuestions();
+      const fresh = incoming.filter(q => !base.some(x => x.subject === q.subject && x.question === q.question));
+      const stored = await insertQuestionsBatch(fresh.map(q => ({ ...q, created_at: q.created_at || new Date().toISOString() })));
+      if (stored.length > 0) commitQuestions([...base, ...stored]);
+      const skipped = incoming.length - fresh.length;
+      const failed = fresh.length - stored.length;
+      const note = `✅ 成功导入 ${stored.length} 道题目` +
+        (skipped > 0 ? `，跳过重复 ${skipped} 道` : '') +
+        (failed > 0 ? `，失败 ${failed} 道` : '');
+      if (result) result.textContent = note;
+      toast(stored.length > 0 ? `已导入 ${stored.length} 道题目` : '没有可导入的新题目');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '未知错误';
+      if (result) result.textContent = '❌ 导入失败: ' + msg;
+      toast('导入失败');
     }
   };
   reader.readAsText(file);
@@ -120,7 +131,7 @@ export function loadDemoData(): void {
   ];
 
   demo.forEach((q, i) => { q.id = 10000 + i; q.created_at = new Date().toISOString(); });
-  const existing = getLocal<Question[]>('questions', []);
+  const existing = knownQuestions();
   let added = 0;
   demo.forEach(q => {
     if (!existing.find(x => x.question === q.question && x.subject === q.subject)) {
@@ -128,7 +139,7 @@ export function loadDemoData(): void {
       added++;
     }
   });
-  setLocal('questions', existing);
+  if (added > 0) commitQuestions(existing);
   toast(`已加载 ${added} 道示例题目`);
   const btn = document.getElementById('btnLoadDemo');
   if (btn) {

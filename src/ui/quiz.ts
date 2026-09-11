@@ -1,11 +1,12 @@
 import { SUBJECTS, TYPE_LABELS } from '../constants';
 import { quizState, setQuizState } from '../state';
 import { getLocal, setLocal, todayKey } from '../storage';
-import { shuffle, formatMath, toast } from '../utils';
+import { answerState, markAnswer } from '../progress';
+import { shuffle, formatMath, toast, esc } from '../utils';
 import { loadQuestions, syncFavoriteToDB, syncRecordToDB, syncTodayToDB, syncWrongBookToDB } from '../api';
-import { judgeAnswer, formatCorrectAnswer, isManualType } from '../judge';
+import { judgeAnswer, formatCorrectAnswer, isManualType, answerLetters } from '../judge';
 import { switchPage } from './navigation';
-import type { FavoriteItem, Question, QuizRecord, QuizState, WrongBookItem } from '../types';
+import type { FavoriteItem, Question, QuizRecord, WrongBookItem } from '../types';
 
 let pendingEssay: { q: Question; userAnswer: string } | null = null;
 let favIds = new Set<string>();
@@ -23,69 +24,71 @@ export function invalidateFavIds(): void {
 export async function startQuiz(btn: HTMLButtonElement): Promise<void> {
   btn.disabled = true;
   btn.textContent = '加载中...';
-  const modal = btn.closest<HTMLElement>('.modal-overlay');
-  if (!modal) { btn.disabled = false; return; }
-  const subjectId = modal.dataset.subject || '';
-  const chapter = modal.dataset.chapter || '';
-  const section = modal.dataset.section || '';
-  const modeEl = modal.querySelector<HTMLElement>('.mode-option.active');
-  const mode = modeEl?.dataset.mode || 'random';
-  const rangeEl = modal.querySelector<HTMLInputElement>('input[type=range]');
-  const count = rangeEl ? parseInt(rangeEl.value) : 20;
+  try {
+    const modal = btn.closest<HTMLElement>('.modal-overlay');
+    if (!modal) { btn.disabled = false; btn.textContent = '开始刷题'; return; }
+    const subjectId = modal.dataset.subject || '';
+    const chapter = modal.dataset.chapter || '';
+    const section = modal.dataset.section || '';
+    const modeEl = modal.querySelector<HTMLElement>('.mode-option.active');
+    const mode = modeEl?.dataset.mode || 'random';
+    const rangeEl = modal.querySelector<HTMLInputElement>('input[type=range]');
+    const count = rangeEl ? parseInt(rangeEl.value) : 20;
 
-  const s = SUBJECTS.find(x => x.id === subjectId);
-  let scopeChapters: string[] | null = null;
-  if (chapter !== '') scopeChapters = [chapter];
-  else if (section !== '') scopeChapters = s?.sections.find(x => x.name === section)?.chapters || null;
-  const inScope = (ch: string) => scopeChapters === null || scopeChapters.includes(ch);
+    const s = SUBJECTS.find(x => x.id === subjectId);
+    let scopeChapters: string[] | null = null;
+    if (chapter !== '') scopeChapters = [chapter];
+    else if (section !== '') scopeChapters = s?.sections.find(x => x.name === section)?.chapters || null;
+    const inScope = (ch: string) => scopeChapters === null || scopeChapters.includes(ch);
 
-  let questions: Question[] = [];
-  let allAnswered = false;
-  if (mode === 'wrong') {
-    questions = getLocal<WrongBookItem[]>('wrongBook', []).filter(q => q.subject === subjectId && !q.mastered && inScope(q.chapter));
-  } else {
-    questions = await loadQuestions(subjectId);
-    questions = questions.filter(q => inScope(q.chapter));
-    if (mode === 'fresh') {
-      const records = getLocal<QuizRecord[]>('records', []);
-      const correctIds = new Set(records.filter(r => r.is_correct && r.question_id !== null).map(r => String(r.question_id)));
-      const unmasteredIds = new Set(getLocal<WrongBookItem[]>('wrongBook', []).filter(w => !w.mastered).map(w => String(w.id)));
-      questions = questions.filter(q => !correctIds.has(String(q.id)) || unmasteredIds.has(String(q.id)));
+    let questions: Question[] = [];
+    let allAnswered = false;
+    if (mode === 'wrong') {
+      questions = getLocal<WrongBookItem[]>('wrongBook', []).filter(q => q.subject === subjectId && !q.mastered && inScope(q.chapter));
+    } else {
+      questions = await loadQuestions(subjectId);
+      questions = questions.filter(q => inScope(q.chapter));
+      const state = answerState();
+      if (mode === 'fresh') {
+        const unmasteredIds = new Set(getLocal<WrongBookItem[]>('wrongBook', []).filter(w => !w.mastered).map(w => String(w.id)));
+        questions = questions.filter(q => state[String(q.id)] !== 'c' || unmasteredIds.has(String(q.id)));
+      }
+      if (mode === 'continue') {
+        const scopedCount = questions.length;
+        questions = questions.filter(q => state[String(q.id)] === undefined);
+        if (questions.length === 0 && scopedCount > 0) allAnswered = true;
+      }
+      if (mode === 'random') questions = shuffle(questions);
     }
-    if (mode === 'continue') {
-      const scopedCount = questions.length;
-      const records = getLocal<QuizRecord[]>('records', []);
-      const answeredIds = new Set(records.filter(r => r.question_id !== null).map(r => String(r.question_id)));
-      questions = questions.filter(q => !answeredIds.has(String(q.id)));
-      if (questions.length === 0 && scopedCount > 0) allAnswered = true;
-    }
-    if (mode === 'random') questions = shuffle(questions);
-  }
-  questions = questions.slice(0, count);
+    questions = questions.slice(0, count);
 
-  if (questions.length === 0) {
-    toast(allAnswered ? '题目已全部刷完，试试「错题重做」或更换范围' : (scopeChapters !== null ? '当前范围内暂无可刷题目' : '该科目暂无题目，请先添加题目'));
+    if (questions.length === 0) {
+      toast(allAnswered ? '题目已全部刷完，试试「错题重做」或更换范围' : (scopeChapters !== null ? '当前范围内暂无可刷题目' : '该科目暂无题目，请先添加题目'));
+      return;
+    }
+
+    setQuizState({
+      subject: subjectId,
+      subjectName: s ? s.name : '',
+      questions,
+      index: 0,
+      correct: 0,
+      wrong: 0,
+      total: questions.length
+    });
+
+    modal.remove();
+    switchPage('quiz');
+    const scopeLabel = chapter !== '' ? chapter : section !== '' ? section : '';
+    const title = document.getElementById('quizTitle');
+    if (title) title.textContent = s ? `${s.name}${scopeLabel !== '' ? ' · ' + scopeLabel : ''}` : '刷题';
+    renderQuestion();
+  } catch (e) {
+    toast('题目加载失败，请检查网络后重试');
+  } finally {
     btn.disabled = false;
     btn.textContent = '开始刷题';
-    return;
   }
-
-  setQuizState({
-    subject: subjectId,
-    subjectName: s ? s.name : '',
-    questions,
-    index: 0,
-    correct: 0,
-    wrong: 0,
-    total: questions.length
-  });
-
-  modal.remove();
-  switchPage('quiz');
-  const scopeLabel = chapter !== '' ? chapter : section !== '' ? section : '';
-  const title = document.getElementById('quizTitle');
-  if (title) title.textContent = s ? `${s.name}${scopeLabel !== '' ? ' · ' + scopeLabel : ''}` : '刷题';
-  renderQuestion();
 }
 
 export function renderQuestion(): void {
@@ -123,8 +126,8 @@ export function renderQuestion(): void {
       <div class="q-meta">
         <div class="q-tags">
           <span class="tag tag-blue">${typeLabel}</span>
-          <span class="tag tag-gray">${q.chapter || ''}</span>
-          ${q.source ? `<span class="tag tag-green">${q.source}</span>` : ''}
+          <span class="tag tag-gray">${esc(q.chapter || '')}</span>
+          ${q.source ? `<span class="tag tag-green">${esc(q.source)}</span>` : ''}
         </div>
         <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(this)" title="收藏/取消收藏">${isFav ? '★' : '☆'}</button>
       </div>
@@ -210,7 +213,7 @@ export function submitAnswer(): void {
     return;
   }
 
-  if (q.type === 'essay') {
+  if (isManualType(q.type)) {
     const ta = document.getElementById('essayInput') as HTMLTextAreaElement | null;
     userAnswer = (ta?.value || '').trim();
     if (!userAnswer) { toast('请先写下你的作答'); return; }
@@ -242,19 +245,15 @@ export function submitAnswer(): void {
     userAnswer = (sel as HTMLElement).dataset.letter || '';
   }
 
-  const correctAnswer = q.answer.trim().toUpperCase();
-  const isCorrect = userAnswer === correctAnswer;
+  const isCorrect = judgeAnswer(q.type, userAnswer, q.answer);
+  const letters = answerLetters(q.answer);
 
   const allOptions = document.querySelectorAll('#quizContent .option');
   allOptions.forEach(o => {
-    const letter = (o as HTMLElement).dataset.letter;
-    if (isMultiple) {
-      if (letter && correctAnswer.includes(letter)) o.classList.add('correct');
-      if (letter && o.classList.contains('selected') && !correctAnswer.includes(letter)) o.classList.add('wrong');
-    } else {
-      if (letter === correctAnswer) o.classList.add('correct');
-      if (o.classList.contains('selected') && letter !== correctAnswer) o.classList.add('wrong');
-    }
+    const letter = (o as HTMLElement).dataset.letter || '';
+    const inAnswer = isMultiple ? letters.includes(letter) : letter === letters[0];
+    if (inAnswer) o.classList.add('correct');
+    if (o.classList.contains('selected') && !inAnswer) o.classList.add('wrong');
   });
 
   recordResult(q, userAnswer, isCorrect);
@@ -285,11 +284,12 @@ function recordResult(q: Question, userAnswer: string, isCorrect: boolean): void
   const record: QuizRecord = { question_id: q.id ?? null, subject: q.subject, is_correct: isCorrect, user_answer: userAnswer, created_at: new Date().toISOString() };
   records.push(record);
   setLocal('records', records.slice(-1000));
+  markAnswer(q.id, isCorrect);
   void syncRecordToDB(record);
 
   if (!isCorrect) {
     const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []);
-    const exists = wrongBook.find(w => w.id === q.id);
+    const exists = wrongBook.find(w => String(w.id) === String(q.id));
     if (!exists) {
       wrongBook.push({ ...q as WrongBookItem, userAnswer, mastered: false, reviewCount: 0, wrongTime: Date.now() });
     } else {
@@ -298,7 +298,7 @@ function recordResult(q: Question, userAnswer: string, isCorrect: boolean): void
     }
     setLocal('wrongBook', wrongBook);
   } else {
-    const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []).filter(w => w.id !== q.id);
+    const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []).filter(w => String(w.id) !== String(q.id));
     setLocal('wrongBook', wrongBook);
   }
   void syncWrongBookToDB(q, userAnswer, isCorrect);
@@ -315,7 +315,7 @@ function showFeedback(q: Question, userAnswer: string, isCorrect: boolean): void
     <div class="feedback-banner ${isCorrect ? 'correct' : 'wrong'}">
       <span>${isCorrect ? '✓ 回答正确！' : '✗ 回答错误'}</span>
     </div>
-    ${q.explanation ? `<div class="explanation-box"><div class="exp-label">正确答案：${correctAnswer}</div><div class="exp-text">${formatMath(q.explanation)}</div></div>` : `<div class="explanation-box"><div class="exp-label">正确答案：${correctAnswer}</div></div>`}
+    ${q.explanation ? `<div class="explanation-box"><div class="exp-label">正确答案：${esc(correctAnswer)}</div><div class="exp-text">${formatMath(q.explanation)}</div></div>` : `<div class="explanation-box"><div class="exp-label">正确答案：${esc(correctAnswer)}</div></div>`}
     <div style="padding:0 16px">
       <button class="btn btn-primary mt-16" onclick="nextQuestion()">${st.index + 1 < st.total ? '下一题' : '查看结果'}</button>
     </div>

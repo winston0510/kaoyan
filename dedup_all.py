@@ -1,31 +1,37 @@
 import re
-import json
 import os
 from collections import defaultdict
 
+from qkey import dedup_key
+
 BASE = os.path.dirname(os.path.abspath(__file__))
+
+VALID_TYPES = ('single', 'multiple', 'judge', 'fill', 'essay')
+DEFAULT_SOURCES = {
+    'math2': '数学二题库',
+    'circuit': '电路题库(北交大870)',
+    'english2': '英语二题库',
+    'politics': '政治题库',
+}
 
 def esc(s):
     if s is None:
         return ''
     return str(s).replace("'", "''")
 
-def normalize_question(q):
-    q = re.sub(r'<[^>]+>', '', q)
-    q = re.sub(r'\s+', '', q)
-    q = re.sub(r'[，。、？！（）；：""''【】《》〈〉「」『』]', '', q)
-    q = q.lower()
-    return q[:80]
-
 questions = []
 seen_keys = set()
-stats = defaultdict(lambda: {'total': 0, 'dup': 0})
+stats = defaultdict(lambda: {'total': 0, 'dup': 0, 'skipped_short': 0, 'skipped_type': 0})
 
-def add_question(subject, chapter, qtype, question, options, answer, explanation, difficulty):
-    if not question or len(str(question)) < 5:
+def add_question(subject, chapter, qtype, question, options, answer, explanation, difficulty, source=''):
+    if qtype not in VALID_TYPES:
+        stats[subject]['skipped_type'] += 1
         return
-    key = normalize_question(str(question))
-    if not key or key in seen_keys:
+    if not question or len(str(question)) < 5:
+        stats[subject]['skipped_short'] += 1
+        return
+    key = dedup_key(subject, question)
+    if key in seen_keys:
         stats[subject]['dup'] += 1
         stats[subject]['total'] += 1
         return
@@ -39,60 +45,45 @@ def add_question(subject, chapter, qtype, question, options, answer, explanation
         'options': str(options),
         'answer': str(answer),
         'explanation': str(explanation) if explanation else '',
-        'difficulty': int(difficulty) if difficulty else 2
+        'difficulty': int(difficulty) if difficulty else 2,
+        'source': source or DEFAULT_SOURCES.get(subject, '')
     })
 
-def parse_sql_file(filepath):
-    if not os.path.exists(filepath):
-        print(f"File not found: {filepath}")
-        return
-    with open(filepath, 'r', encoding='utf-8') as f:
-        content = f.read()
-    value_pattern = re.compile(
-        r"\('(math2|english2|circuit|politics)',\s*'([^']*(?:''[^']*)*)',\s*"
-        r"'(single|multiple|judge)',\s*'([^']*(?:''[^']*)*)',\s*"
-        r"'([^']*(?:''[^']*)*)',\s*'([^']*(?:''[^']*)*)',\s*"
-        r"'([^']*(?:''[^']*)*)',\s*(\d+)\)",
-        re.DOTALL
-    )
-    matches = value_pattern.findall(content)
-    for m in matches:
-        subject, chapter, qtype, question, options, answer, explanation, diff = m
-        chapter = chapter.replace("''", "'")
-        question = question.replace("''", "'")
-        options = options.replace("''", "'")
-        answer = answer.replace("''", "'")
-        explanation = explanation.replace("''", "'")
-        add_question(subject, chapter, qtype, question, options, answer, explanation, int(diff))
-    print(f"{os.path.basename(filepath)}: parsed {len(matches)} value rows")
+ROW = re.compile(
+    r"\('(math2|english2|circuit|politics)',\s*'([^']*(?:''[^']*)*)',\s*"
+    r"'([a-z_]+)',\s*'([^']*(?:''[^']*)*)',\s*"
+    r"'([^']*(?:''[^']*)*)',\s*'([^']*(?:''[^']*)*)',\s*"
+    r"'([^']*(?:''[^']*)*)',\s*(\d+)(?:,\s*'([^']*(?:''[^']*)*)')?\)",
+    re.DOTALL
+)
 
-def parse_politics_sql(filepath):
+def unq(s):
+    return s.replace("''", "'")
+
+def count_tuple_lines(content):
+    return sum(1 for line in content.splitlines() if line.lstrip().startswith("('"))
+
+def parse_sql_file(filepath, subject_filter=None, default_source=''):
     if not os.path.exists(filepath):
-        print(f"File not found: {filepath}")
-        return
-    with open(filepath, 'r', encoding='utf-8') as f:
+        raise SystemExit(f"File not found: {filepath}")
+    with open(filepath, 'r', encoding='utf-8-sig') as f:
         content = f.read()
-    value_pattern = re.compile(
-        r"\('politics',\s*'([^']*(?:''[^']*)*)',\s*"
-        r"'(single|multiple|judge)',\s*'([^']*(?:''[^']*)*)',\s*"
-        r"'([^']*(?:''[^']*)*)',\s*'([^']*(?:''[^']*)*)',\s*"
-        r"'([^']*(?:''[^']*)*)',\s*(\d+)\)",
-        re.DOTALL
-    )
-    matches = value_pattern.findall(content)
-    for m in matches:
-        chapter, qtype, question, options, answer, explanation, diff = m
-        chapter = chapter.replace("''", "'")
-        question = question.replace("''", "'")
-        options = options.replace("''", "'")
-        answer = answer.replace("''", "'")
-        explanation = explanation.replace("''", "'")
-        add_question('politics', chapter, qtype, question, options, answer, explanation, int(diff))
-    print(f"{os.path.basename(filepath)}: parsed {len(matches)} value rows")
+    expected = count_tuple_lines(content)
+    matched = 0
+    for m in ROW.finditer(content):
+        subject, chapter, qtype, question, options, answer, explanation, diff, src = m.groups()
+        if subject_filter and subject != subject_filter:
+            continue
+        add_question(subject, unq(chapter), qtype, unq(question), unq(options), unq(answer),
+                     unq(explanation), int(diff), (unq(src) if src else '') or default_source)
+        matched += 1
+    if expected and matched == 0:
+        raise SystemExit(f"{os.path.basename(filepath)}: 含 {expected} 行元组但解析到 0 条，解析器与文件格式不匹配")
+    print(f"{os.path.basename(filepath)}: parsed {matched} value rows" + (f" (文件内元组行 {expected})" if expected else ""))
 
 print("=== 开始解析所有SQL文件 ===\n")
 parse_sql_file(os.path.join(BASE, 'seed_all.sql'))
-parse_politics_sql(os.path.join(BASE, 'seed_politics_new.sql'))
+parse_sql_file(os.path.join(BASE, 'seed_politics_new.sql'))
 
 print(f"\n=== 去重统计 ===")
 total_in = 0
@@ -102,7 +93,8 @@ for subj in ['math2', 'circuit', 'english2', 'politics']:
     total_in += s['total']
     total_dup += s['dup']
     unique = s['total'] - s['dup']
-    print(f"  {subj}: 输入{s['total']} -> 去重后{unique} (移除{s['dup']}重复)")
+    print(f"  {subj}: 输入{s['total']} -> 去重后{unique} (移除{s['dup']}重复, "
+          f"题干过短{s['skipped_short']}, 题型非法{s['skipped_type']})")
 
 print(f"\n总输入: {total_in}")
 print(f"总去重后: {len(questions)}")
@@ -114,7 +106,7 @@ print(f"\n最终各科目题量:")
 for subj, cnt in sorted(subj_counts.items()):
     print(f"  {subj}: {cnt}")
 
-output = os.path.join(BASE, 'seed_all_dedup.sql')
+output = os.path.join(BASE, 'seed_all_dedup.new.sql')
 with open(output, 'w', encoding='utf-8') as f:
     f.write("-- ============================================\n")
     f.write("-- 考研刷题工具 - 完整数据库 (去重版)\n")
@@ -122,10 +114,7 @@ with open(output, 'w', encoding='utf-8') as f:
     for subj, cnt in sorted(subj_counts.items()):
         names = {'math2': '数学二', 'circuit': '电路', 'english2': '英语二', 'politics': '政治'}
         f.write(f"--   {names.get(subj, subj)}: {cnt}题\n")
-    f.write("-- ============================================\n\n")
-    f.write("-- 数据库表结构\n")
-    f.write(open(os.path.join(BASE, 'schema.sql'), 'r', encoding='utf-8').read())
-    f.write("\n\n")
+    f.write("-- 建表与权限见 schema.sql；本文件只含数据\n\n")
 
     by_subject = defaultdict(list)
     for q in questions:
@@ -142,13 +131,13 @@ with open(output, 'w', encoding='utf-8') as f:
         batch_size = 50
         for i in range(0, len(qs), batch_size):
             batch = qs[i:i+batch_size]
-            f.write("INSERT INTO questions (subject, chapter, type, question, options, answer, explanation, difficulty) VALUES\n")
+            f.write("INSERT INTO questions (subject, chapter, type, question, options, answer, explanation, difficulty, source) VALUES\n")
             for j, q in enumerate(batch):
                 ending = ',' if j < len(batch) - 1 else ';'
                 f.write(
                     f"('{esc(q['subject'])}', '{esc(q['chapter'])}', '{q['type']}', "
                     f"'{esc(q['question'])}', '{esc(q['options'])}', '{esc(q['answer'])}', "
-                    f"'{esc(q['explanation'])}', {q['difficulty']}){ending}\n"
+                    f"'{esc(q['explanation'])}', {q['difficulty']}, '{esc(q['source'])}'){ending}\n"
                 )
             f.write("\n")
 

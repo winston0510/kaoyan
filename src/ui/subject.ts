@@ -1,12 +1,16 @@
 import { SUBJECTS } from '../constants';
 import { getLocal } from '../storage';
 import { answerState } from '../progress';
-import { esc } from '../utils';
+import { esc, toast } from '../utils';
 import { loadQuestions } from '../api';
+import { isPaperSource, listPapers, paperLabel, paperMinutes, paperQuestions } from '../papers';
+import { paperDoneFor } from '../plan';
 import { switchPage } from './navigation';
 import type { WrongBookItem } from '../types';
 
 let currentSubject = '';
+
+const TYPE_SHORT: Record<string, string> = { single: '单', multiple: '多', fill: '填', essay: '解', judge: '判' };
 
 export function openSubject(subjectId: string): void {
   const s = SUBJECTS.find(x => x.id === subjectId);
@@ -79,6 +83,35 @@ export async function renderSubject(): Promise<void> {
     <button class="btn btn-primary btn-sm" onclick="openQuizModal('${s.id}', '', '')">开始</button>
   </div>`;
 
+  const paperAgg = new Map<string, { total: number; practiced: number }>();
+  for (const q of questions) {
+    const src = (q.source || '').trim();
+    if (!isPaperSource(src)) continue;
+    const agg = paperAgg.get(src) || { total: 0, practiced: 0 };
+    agg.total += 1;
+    if (practicedIds(q.id)) agg.practiced += 1;
+    paperAgg.set(src, agg);
+  }
+  const papers = listPapers(questions).filter(p => (paperAgg.get(p.source)?.total || 0) > 0);
+  let paperHtml = '';
+  if (papers.length > 0) {
+    const cards = papers.map(p => {
+      const agg = paperAgg.get(p.source) || { total: p.total, practiced: 0 };
+      const done = paperDoneFor(p.source, s.id);
+      const typeText = ['single', 'multiple', 'fill', 'essay', 'judge'].filter(t => p.types[t]).map(t => `${TYPE_SHORT[t]}${p.types[t]}`).join(' ');
+      const badge = done
+        ? `<span class="paper-done">整卷完成 ${Math.round(done.correct / Math.max(1, done.total) * 100)}%</span>`
+        : (p.complete ? '<span class="paper-full">完整卷</span>' : `<span class="paper-part">缺 ${Math.max(0, p.expected - p.total)} 题</span>`);
+      return `<div class="paper-card" onclick="openPaperModal('${s.id}', '${escAttr(p.source)}')">
+        <div class="pc-name">${esc(paperLabel(p))}</div>
+        <div class="pc-meta">${esc(typeText)} · 已练 ${agg.practiced}/${agg.total} · 建议 ${paperMinutes(s.id, p.year, agg.total)} 分</div>
+        <div class="pc-right">${badge}<span class="subject-arrow">›</span></div>
+      </div>`;
+    }).join('');
+    const note = s.id === 'circuit' ? '<div class="paper-note">870 无官方公开真题，以下为真题风格套卷</div>' : '';
+    paperHtml = `<div class="section-header"><div class="section-title">真题套卷</div><div class="section-meta">${papers.length} 套</div></div>${note}${cards}`;
+  }
+
   const sectionHtml = sections.map(sec => {
     const secTotal = sec.stats.reduce((a, c) => a + c.total, 0);
     const secPracticed = sec.stats.reduce((a, c) => a + c.practiced, 0);
@@ -102,7 +135,7 @@ export async function renderSubject(): Promise<void> {
     return headerHtml + cardsHtml;
   }).join('');
 
-  content.innerHTML = heroHtml + sectionHtml;
+  content.innerHTML = heroHtml + paperHtml + sectionHtml;
 }
 
 export function openQuizModal(subjectId: string, chapter: string, section: string): void {
@@ -141,4 +174,47 @@ export function openQuizModal(subjectId: string, chapter: string, section: strin
   </div>`;
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
   document.body.appendChild(modal);
+}
+
+export async function openPaperModal(subjectId: string, source: string): Promise<void> {
+  const s = SUBJECTS.find(x => x.id === subjectId);
+  if (!s) return;
+  const questions = paperQuestions(await loadQuestions(subjectId), source);
+  if (questions.length === 0) {
+    toast('该套卷暂无可刷题目');
+    return;
+  }
+  const ym = /(\d{4})/.exec(source);
+  const year = Number(ym ? ym[1] : 0);
+  const suggested = paperMinutes(subjectId, year, questions.length);
+  const opts = [
+    { min: suggested, title: `限时 ${suggested} 分钟`, desc: '按整套卷的建议用时倒计时' },
+    { min: 0, title: '不限时', desc: '只做质量，不练速度' },
+    { min: Math.round(suggested / 2), title: `冲刺 ${Math.round(suggested / 2)} 分钟`, desc: '时间减半，练取舍与速度' }
+  ];
+  const done = paperDoneFor(source, subjectId);
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.dataset.subject = subjectId;
+  modal.dataset.paper = source;
+  modal.dataset.minutes = String(suggested);
+  modal.innerHTML = `<div class="modal-panel" onclick="event.stopPropagation()">
+    <div class="modal-header"><span class="modal-title">${s.name} · ${esc(source)}</span><span class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</span></div>
+    <div class="paper-modal-meta">共 ${questions.length} 题，按卷面顺序出题${done ? ` · 上次整卷正确率 ${Math.round(done.correct / Math.max(1, done.total) * 100)}%` : ''}</div>
+    <div style="margin-bottom:20px"><label style="font-size:.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:8px">计时方式</label>
+      ${opts.map((o, i) => `<div class="mode-option${i === 0 ? ' active' : ''}" data-min="${o.min}" onclick="selectMinutes(this)"><span class="mode-title">${o.title}</span><span class="mode-desc">${o.desc}</span></div>`).join('')}
+    </div>
+    <button class="btn btn-primary" onclick="startQuiz(this)">开始整套</button>
+  </div>`;
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+export function selectMinutes(el: HTMLElement): void {
+  const parent = el.parentElement;
+  if (!parent) return;
+  parent.querySelectorAll('.mode-option').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  const modal = el.closest<HTMLElement>('.modal-overlay');
+  if (modal) modal.dataset.minutes = el.dataset.min || '0';
 }

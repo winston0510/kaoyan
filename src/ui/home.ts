@@ -1,12 +1,16 @@
 import { SUBJECTS } from '../constants';
 import { getLocal, todayKey } from '../storage';
-import { calcStreak, studyDays } from '../streak';
+import { calcStreak } from '../streak';
+import { activeDayKeys, cloudDaysMap, cloudLoaded, dayCount, localTodayDays, mergeDayMaps } from '../stats';
 import { daysLeft, loadPapersDone, loadPlan, planSummary, savePlan, weekCountBySubject } from '../plan';
 import { esc, toast } from '../utils';
 import type { QuizRecord, WrongBookItem } from '../types';
 
 export function renderHome(): void {
-  const today = getLocal<{ total: number; correct: number }>('today_' + todayKey(), { total: 0, correct: 0 });
+  const localToday = getLocal<{ total: number; correct: number }>('today_' + todayKey(), { total: 0, correct: 0 });
+  const cloud = cloudDaysMap();
+  const today = cloudLoaded() ? dayCount(cloud, todayKey()) : localToday;
+  const streakDays = activeDayKeys(mergeDayMaps(cloud, localTodayDays()));
   const el1 = document.getElementById('todayTotal');
   const el2 = document.getElementById('todayCorrect');
   const el3 = document.getElementById('todayRate');
@@ -14,7 +18,7 @@ export function renderHome(): void {
   if (el2) el2.textContent = String(today.correct);
   if (el3) el3.textContent = today.total > 0 ? Math.round(today.correct / today.total * 100) + '%' : '-';
   const el4 = document.getElementById('todayStreak');
-  if (el4) el4.textContent = String(calcStreak(studyDays()));
+  if (el4) el4.textContent = String(calcStreak(streakDays));
   const sub = document.getElementById('homeSub');
   if (sub) {
     const n = new Date();

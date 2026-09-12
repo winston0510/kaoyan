@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { judgeAnswer, formatCorrectAnswer, isManualType } from '../src/judge';
+import { judgeAnswer, formatCorrectAnswer, isManualType, answerLetters } from '../src/judge';
+
+describe('answerLetters 答案字母解析', () => {
+  it('乱序与带分隔符均可解析', () => {
+    expect(answerLetters('BA')).toEqual(['B', 'A']);
+    expect(answerLetters('A,B')).toEqual(['A', 'B']);
+    expect(answerLetters(' a ')).toEqual(['A']);
+  });
+
+  it('非字母题型返回空', () => {
+    expect(answerLetters('2|二')).toEqual([]);
+    expect(answerLetters('')).toEqual([]);
+  });
+});
 
 describe('judgeAnswer 单选/判断', () => {
   it('大小写与首尾空白不敏感', () => {

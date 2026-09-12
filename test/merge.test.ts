@@ -55,12 +55,23 @@ describe('mergeRecords 答题记录合并', () => {
     mergeRecords(rows);
     expect(getLocal<QuizRecord[]>('records', [])).toHaveLength(1000);
   });
+
+  it('合并时同步维护 answerState', () => {
+    mergeRecords([
+      { question_id: 1, is_correct: false, user_answer: 'B', created_at: '2026-08-29T10:00:00Z' },
+      { question_id: 1, is_correct: true, user_answer: 'A', created_at: '2026-08-29T11:00:00Z' },
+      { question_id: 2, is_correct: false, user_answer: '3', created_at: '2026-08-28T09:00:00Z' }
+    ]);
+    const state = getLocal<Record<string, string>>('answerState', {});
+    expect(state['1']).toBe('c');
+    expect(state['2']).toBe('w');
+  });
 });
 
 describe('mergeWrongBook 错题本合并', () => {
-  it('仅合并在题目缓存中存在的行', () => {
+  it('仅合并在题目缓存中存在的行', async () => {
     setLocal('questions', [Q1]);
-    mergeWrongBook([
+    await mergeWrongBook([
       { question_id: 1, user_answer: 'B', mastered: false, review_count: 1, updated_at: '2026-08-29T10:00:00Z' },
       { question_id: 999, user_answer: 'C', mastered: false, review_count: 0, updated_at: '2026-08-29T10:00:00Z' }
     ] as MergeWrongRow[]);
@@ -71,11 +82,11 @@ describe('mergeWrongBook 错题本合并', () => {
     expect(merged[0].question).toBe('题1');
   });
 
-  it('云端更新更晚时覆盖本地，但 mastered 取或', () => {
+  it('云端更新更晚时覆盖本地，但 mastered 取或', async () => {
     setLocal('questions', [Q1]);
     const localItem: WrongBookItem = { ...Q1, userAnswer: 'C', mastered: true, reviewCount: 5, wrongTime: new Date('2026-08-28T00:00:00Z').getTime() };
     setLocal('wrongBook', [localItem]);
-    mergeWrongBook([{ question_id: 1, user_answer: 'B', mastered: false, review_count: 2, updated_at: '2026-08-29T10:00:00Z' }] as MergeWrongRow[]);
+    await mergeWrongBook([{ question_id: 1, user_answer: 'B', mastered: false, review_count: 2, updated_at: '2026-08-29T10:00:00Z' }] as MergeWrongRow[]);
     const merged = getLocal<WrongBookItem[]>('wrongBook', []);
     expect(merged).toHaveLength(1);
     expect(merged[0].userAnswer).toBe('B');
@@ -83,11 +94,11 @@ describe('mergeWrongBook 错题本合并', () => {
     expect(merged[0].mastered).toBe(true);
   });
 
-  it('云端记录更旧时保留本地', () => {
+  it('云端记录更旧时保留本地', async () => {
     setLocal('questions', [Q1]);
     const localItem: WrongBookItem = { ...Q1, userAnswer: 'C', mastered: false, reviewCount: 5, wrongTime: new Date('2026-08-29T10:00:00Z').getTime() };
     setLocal('wrongBook', [localItem]);
-    mergeWrongBook([{ question_id: 1, user_answer: 'B', mastered: true, review_count: 1, updated_at: '2026-08-28T00:00:00Z' }] as MergeWrongRow[]);
+    await mergeWrongBook([{ question_id: 1, user_answer: 'B', mastered: true, review_count: 1, updated_at: '2026-08-28T00:00:00Z' }] as MergeWrongRow[]);
     const merged = getLocal<WrongBookItem[]>('wrongBook', []);
     expect(merged[0].userAnswer).toBe('C');
     expect(merged[0].reviewCount).toBe(5);
@@ -118,9 +129,9 @@ describe('mergeDailyStats 每日统计合并', () => {
 });
 
 describe('mergeFavorites 收藏合并', () => {
-  it('仅合并在题目缓存中存在的行', () => {
+  it('仅合并在题目缓存中存在的行', async () => {
     setLocal('questions', [Q2]);
-    mergeFavorites([
+    await mergeFavorites([
       { question_id: 2, subject: 'math2', created_at: '2026-08-29T10:00:00Z' },
       { question_id: 999, subject: 'x', created_at: '2026-08-29T10:00:00Z' }
     ] as MergeFavoriteRow[]);
@@ -130,23 +141,23 @@ describe('mergeFavorites 收藏合并', () => {
     expect(merged[0].question).toBe('题2');
   });
 
-  it('云端收藏更晚时更新 favoritedAt', () => {
+  it('云端收藏更晚时更新 favoritedAt', async () => {
     setLocal('questions', [Q2]);
     const oldTs = new Date('2026-08-01T00:00:00Z').getTime();
     const localFav: FavoriteItem = { ...Q2, favoritedAt: oldTs };
     setLocal('favorites', [localFav]);
-    mergeFavorites([{ question_id: 2, created_at: '2026-08-29T10:00:00Z' }] as MergeFavoriteRow[]);
+    await mergeFavorites([{ question_id: 2, created_at: '2026-08-29T10:00:00Z' }] as MergeFavoriteRow[]);
     const merged = getLocal<FavoriteItem[]>('favorites', []);
     expect(merged).toHaveLength(1);
     expect(merged[0].favoritedAt).toBeGreaterThan(oldTs);
   });
 
-  it('云端收藏更旧时保留本地时间', () => {
+  it('云端收藏更旧时保留本地时间', async () => {
     setLocal('questions', [Q2]);
     const newTs = new Date('2026-08-29T10:00:00Z').getTime();
     const localFav: FavoriteItem = { ...Q2, favoritedAt: newTs };
     setLocal('favorites', [localFav]);
-    mergeFavorites([{ question_id: 2, created_at: '2026-08-01T00:00:00Z' }] as MergeFavoriteRow[]);
+    await mergeFavorites([{ question_id: 2, created_at: '2026-08-01T00:00:00Z' }] as MergeFavoriteRow[]);
     const merged = getLocal<FavoriteItem[]>('favorites', []);
     expect(merged[0].favoritedAt).toBe(newTs);
   });

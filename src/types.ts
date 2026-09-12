@@ -88,9 +88,3 @@ export interface MergeWrongRow {
   created_at?: string | null;
   updated_at?: string | null;
 }
-
-export interface MergeDailyRow {
-  stat_date: string | null;
-  total?: number | null;
-  correct?: number | null;
-}

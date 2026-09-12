@@ -68,6 +68,14 @@ export function cloudSubjectsMap(): DayMap {
   return cloudSubjects;
 }
 
+export function daysForDisplay(fallback: DayMap): DayMap {
+  return daysLoaded ? cloudDays : fallback;
+}
+
+export function subjectsForDisplay(fallback: DayMap): DayMap {
+  return subjectsLoaded ? cloudSubjects : fallback;
+}
+
 export function dayCount(days: DayMap, key: string): DayCount {
   return days[key] || { total: 0, correct: 0 };
 }
@@ -119,15 +127,6 @@ export function localTodayDays(): DayMap {
     const day = storageKey.slice(prefix.length);
     const stat = getLocal<DayCount>(`today_${day}`, { total: 0, correct: 0 });
     if (stat && stat.total > 0) out[day] = { total: stat.total, correct: stat.correct || 0 };
-  }
-  return out;
-}
-
-export function recentDates(count: number): string[] {
-  const now = new Date();
-  const out: string[] = [];
-  for (let i = count - 1; i >= 0; i--) {
-    out.push(dateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)));
   }
   return out;
 }

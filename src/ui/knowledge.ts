@@ -1,4 +1,6 @@
 import { KNOWLEDGE_TOPICS, type KnowledgeTopic } from '../data/knowledge-data';
+import { onePagerTopic } from '../data/onepagerTopic';
+import { loadOnePager, onePagerSets } from '../onepager';
 import { formatMath } from '../utils';
 
 function mathHtml(s: string): string {
@@ -17,18 +19,29 @@ function topicUnit(t: KnowledgeTopic): string {
   return t.unit || '条公式';
 }
 
+function allTopics(): KnowledgeTopic[] {
+  const extra = onePagerTopic();
+  return extra ? [...KNOWLEDGE_TOPICS, extra] : KNOWLEDGE_TOPICS;
+}
+
 export function renderKnowledge(): void {
   const root = document.getElementById('knowledgeContent');
   if (!root) return;
   resetTopbar();
-  const totalCards = KNOWLEDGE_TOPICS.reduce((a, t) => a + topicCardCount(t), 0);
+  if (onePagerSets().length === 0) {
+    void loadOnePager().then(ok => {
+      if (ok && document.getElementById('knowledgeContent') && document.querySelector('.kt-topic-card')) renderKnowledge();
+    });
+  }
+  const list = allTopics();
+  const totalCards = list.reduce((a, t) => a + topicCardCount(t), 0);
   const hero = `<div class="kt-hero">
     <div class="kt-hero-icon">📚</div>
     <div class="kt-hero-title">知识库</div>
     <div class="kt-hero-sub">知识点速查 · 记忆卡片 · 多科目持续扩展</div>
-    <div class="kt-hero-meta">${KNOWLEDGE_TOPICS.length} 个主题 · ${totalCards} 张记忆卡片</div>
+    <div class="kt-hero-meta">${list.length} 个主题 · ${totalCards} 张记忆卡片</div>
   </div>`;
-  const grid = `<div class="kt-grid">` + KNOWLEDGE_TOPICS.map(t => {
+  const grid = `<div class="kt-grid">` + list.map(t => {
     const itemCount = topicItemCount(t);
     const cardCount = topicCardCount(t);
     return `<div class="kt-topic-card" style="--accent:${t.color}" onclick="openKnowledgeTopic('${t.id}')">
@@ -41,7 +54,7 @@ export function renderKnowledge(): void {
       <span class="kt-topic-arrow">›</span>
     </div>`;
   }).join('') + `</div>`;
-  const empty = KNOWLEDGE_TOPICS.length === 0
+  const empty = list.length === 0
     ? `<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">知识库建设中</div><div class="empty-desc">后续将加入更多科目知识点</div></div>`
     : '';
   root.innerHTML = hero + grid + empty;
@@ -70,7 +83,7 @@ function resetTopbar(): void {
 }
 
 export function openKnowledgeTopic(id: string): void {
-  const t = KNOWLEDGE_TOPICS.find(x => x.id === id);
+  const t = allTopics().find(x => x.id === id);
   if (t) renderTopic(t);
 }
 

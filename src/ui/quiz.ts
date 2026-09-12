@@ -7,6 +7,7 @@ import { loadQuestions, syncFavoriteToDB, syncRecordToDB, syncWrongBookToDB } fr
 import { judgeAnswer, formatCorrectAnswer, isManualType, answerLetters } from '../judge';
 import { paperQuestions, paperMinutes } from '../papers';
 import { answerPoints, isRecitable } from '../recite';
+import { loadOnePager, onePagerBlock } from '../onepager';
 import { recordPaperDone } from '../plan';
 import { switchPage } from './navigation';
 import type { FavoriteItem, Question, QuizRecord, WrongBookItem } from '../types';
@@ -29,6 +30,7 @@ export function invalidateFavIds(): void {
 }
 
 export async function startQuiz(btn: HTMLButtonElement): Promise<void> {
+  void loadOnePager();
   btn.disabled = true;
   btn.textContent = '加载中...';
   try {
@@ -430,6 +432,7 @@ function showFeedback(q: Question, userAnswer: string, isCorrect: boolean): void
       <span>${isCorrect ? '✓ 回答正确！' : '✗ 回答错误'}</span>
     </div>
     ${q.explanation ? `<div class="explanation-box"><div class="exp-label">正确答案：${esc(correctAnswer)}</div><div class="exp-text">${formatMath(q.explanation)}</div></div>` : `<div class="explanation-box"><div class="exp-label">正确答案：${esc(correctAnswer)}</div></div>`}
+    ${onePagerBlock(q, isCorrect)}
     <div style="padding:0 16px">
       <button class="btn btn-primary mt-16" onclick="nextQuestion()">${st.index + 1 < st.total ? '下一题' : '查看结果'}</button>
     </div>

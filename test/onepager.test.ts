@@ -3,6 +3,7 @@ import { loadOnePager, onePagerBlock, onePagerFor, onePagerSets, setOnePager } f
 import { SUBJECTS } from '../src/constants';
 import type { Question } from '../src/types';
 import rawJson from '../public/onepager.json';
+import { onePagerTopic } from '../src/data/onepagerTopic';
 
 const KINDS = new Set(['概念', '公式', '方法', '步骤', '口诀', '易错']);
 const RAW = rawJson;
@@ -77,5 +78,40 @@ describe('取数与渲染', () => {
     expect(stub.mock.calls[0][0]).toBe('/onepager.json');
     expect(onePagerSets().length).toBe(rawJson.length);
     expect(onePagerBlock(q('math2', '第6章 二次型'), false)).toContain('kc-pager');
+  });
+});
+
+describe('一页纸派生成知识库主题', () => {
+  const topicOf = () => onePagerTopic() as NonNullable<ReturnType<typeof onePagerTopic>>;
+  it('未加载数据时不产出主题', () => {
+    setOnePager([]);
+    expect(onePagerTopic()).toBeNull();
+    setOnePager(RAW);
+  });
+  it('按高等数学 / 线性代数两个 part 组织，条目数守恒', () => {
+    const topic = topicOf();
+    expect(topic.id).toBe('math2-onepager');
+    expect(topic.parts.map((x: { name: string }) => x.name)).toEqual(['高等数学', '线性代数']);
+    expect(topic.parts[0].sections.length).toBe(7);
+    expect(topic.parts[1].sections.length).toBe(6);
+    const items = topic.parts.reduce((n: number, x) => n + x.sections.reduce((m: number, y) => m + y.items.length, 0), 0);
+    expect(items).toBe(rawJson.reduce((n: number, k: { points: unknown[] }) => n + k.points.length, 0));
+    const tagged = topic.parts[0].sections[0].items[0].tags || [];
+    expect(tagged[tagged.length - 1]).toBe('一页纸');
+  });
+  it('记忆卡片只收可回忆的四类，且题干带分类前缀', () => {
+    const topic = topicOf();
+    const kinds = new Set(['方法', '步骤', '口诀', '易错']);
+    const expected = rawJson.reduce((n: number, k: { points: { k: string }[] }) => n + k.points.filter(x => kinds.has(x.k)).length, 0);
+    const cards = topic.cardGroups.flatMap((g: { cards: { q: string; a: string }[] }) => g.cards);
+    expect(cards.length).toBe(expected);
+    for (const c of cards) expect(kinds.has(c.q.split('｜')[0])).toBe(true);
+    for (const g of topic.cardGroups) expect(g.cards.length).toBeGreaterThan(0);
+  });
+  it('易错提醒只来自易错类且封顶 12 条', () => {
+    const topic = topicOf();
+    expect(topic.tips.length).toBeGreaterThan(0);
+    expect(topic.tips.length).toBeLessThanOrEqual(12);
+    for (const tip of topic.tips) expect(tip).toContain('｜');
   });
 });

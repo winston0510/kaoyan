@@ -2,10 +2,11 @@ import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { SUBJECTS } from './constants';
 import { db, setDb, questionsCache, setQuestionsCache } from './state';
-import { getLocal, setLocal, todayKey } from './storage';
+import { getLocal, setLocal } from './storage';
 import { replaceAnswerState } from './progress';
+import { setCloudDays, setCloudSubjects } from './stats';
 import { toast } from './utils';
-import type { Question, QuizRecord, DailyStat, MergeRecordRow, MergeWrongRow, MergeDailyRow, MergeFavoriteRow, WrongBookItem, FavoriteItem } from './types';
+import type { Question, QuizRecord, MergeRecordRow, MergeWrongRow, MergeFavoriteRow, WrongBookItem, FavoriteItem } from './types';
 
 export function initSupabase(): boolean {
   const url = localStorage.getItem('supabase_url');
@@ -147,13 +148,13 @@ export function ensureAllQuestions(): Promise<Question[]> {
   return p;
 }
 
-function markDirty(key: 'dirtyWrong' | 'dirtyFav' | 'dirtyDaily', id: string): void {
+function markDirty(key: 'dirtyWrong' | 'dirtyFav', id: string): void {
   const list = getLocal<string[]>(key, []);
   if (!list.includes(id)) list.push(id);
   setLocal(key, list.slice(-500));
 }
 
-function shiftDirty(key: 'dirtyWrong' | 'dirtyFav' | 'dirtyDaily', kept: string[]): void {
+function shiftDirty(key: 'dirtyWrong' | 'dirtyFav', kept: string[]): void {
   setLocal(key, kept.slice(-500));
 }
 
@@ -196,19 +197,6 @@ async function deleteByQuestion(client: SupabaseClient, table: 'wrong_book' | 'f
   return !error;
 }
 
-async function upsertDailyRow(client: SupabaseClient, date: string, stat: DailyStat): Promise<boolean> {
-  const { error } = await client.from('daily_stats').upsert(
-    {
-      stat_date: date,
-      total: stat.total || 0,
-      correct: stat.correct || 0,
-      wrong: (stat.total || 0) - (stat.correct || 0)
-    } as never,
-    { onConflict: 'stat_date' }
-  );
-  return !error;
-}
-
 export async function syncRecordToDB(record: QuizRecord): Promise<void> {
   const client = db;
   if (!client || !record.question_id) return;
@@ -236,27 +224,18 @@ export async function syncFavoriteToDB(q: Question, isFavorite: boolean): Promis
   if (!ok) markDirty('dirtyFav', id);
 }
 
-export async function syncTodayToDB(todayStats: DailyStat, date: string): Promise<void> {
-  const client = db;
-  if (!client) return;
-  const ok = await upsertDailyRow(client, date, todayStats);
-  if (!ok) markDirty('dirtyDaily', date);
-}
-
 export async function flushPending(): Promise<void> {
   const client = db;
   if (!client) return;
   const wrongIds = getLocal<string[]>('dirtyWrong', []);
   const favIds = getLocal<string[]>('dirtyFav', []);
-  const dates = getLocal<string[]>('dirtyDaily', []);
   const records = getLocal<QuizRecord[]>('pendingRecords', []);
-  if (!wrongIds.length && !favIds.length && !dates.length && !records.length) return;
+  if (!wrongIds.length && !favIds.length && !records.length) return;
 
   const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []);
   const favorites = getLocal<FavoriteItem[]>('favorites', []);
   const keepWrong: string[] = [];
   const keepFav: string[] = [];
-  const keepDates: string[] = [];
   const keepRecords: QuizRecord[] = [];
 
   for (const id of wrongIds) {
@@ -269,17 +248,12 @@ export async function flushPending(): Promise<void> {
     const ok = item ? await upsertFavoriteRow(client, item) : await deleteByQuestion(client, 'favorites', id);
     if (!ok) keepFav.push(id);
   }
-  for (const date of dates) {
-    const stat = getLocal<DailyStat>('today_' + date, { total: 0, correct: 0 });
-    if (!(await upsertDailyRow(client, date, stat))) keepDates.push(date);
-  }
   for (const rec of records) {
     const result = await insertRecordRow(client, rec);
     if (result === 'retry') keepRecords.push(rec);
   }
   shiftDirty('dirtyWrong', keepWrong);
   shiftDirty('dirtyFav', keepFav);
-  shiftDirty('dirtyDaily', keepDates);
   if (records.length) setLocal('pendingRecords', keepRecords.slice(-200));
 }
 
@@ -332,19 +306,17 @@ export async function mergeWrongBook(rows: MergeWrongRow[]): Promise<void> {
   setLocal('wrongBook', Object.values(byId));
 }
 
-export function mergeDailyStats(rows: MergeDailyRow[]): void {
-  const today = todayKey();
-  rows.forEach(row => {
-    if (!row || !row.stat_date) return;
-    const localKey = 'today_' + row.stat_date;
-    const exists = localStorage.getItem('kaoyan_' + localKey);
-    const val = { total: row.total || 0, correct: row.correct || 0 };
-    if (row.stat_date === today) {
-      if (exists === null) setLocal(localKey, val);
-    } else {
-      setLocal(localKey, val);
-    }
-  });
+export async function refreshCloudStats(): Promise<boolean> {
+  const client = db;
+  if (!client) return false;
+  const [days, subjects] = await Promise.all([
+    client.from('v_daily_stats').select('day, total, correct').order('day', { ascending: true }),
+    client.from('v_subject_stats').select('subject, total, correct').order('subject')
+  ]);
+  if (days.error || !days.data) return false;
+  setCloudDays(days.data as { day: string; total: number; correct: number }[]);
+  if (!subjects.error && subjects.data) setCloudSubjects(subjects.data as { subject: string; total: number; correct: number }[]);
+  return true;
 }
 
 export async function mergeFavorites(rows: MergeFavoriteRow[]): Promise<void> {
@@ -375,15 +347,14 @@ export async function pullFromDB(): Promise<void> {
   if (!client) return;
   try {
     await flushPending();
-    const [r1, r2, r3, r4] = await Promise.all([
+    const [r1, r2, r4] = await Promise.all([
       client.from('quiz_records').select('*').order('created_at', { ascending: false }).limit(1000),
       client.from('wrong_book').select('*'),
-      client.from('daily_stats').select('*'),
-      client.from('favorites').select('*')
+      client.from('favorites').select('*'),
+      refreshCloudStats()
     ]);
     if (r1 && r1.data && r1.data.length) mergeRecords(r1.data as MergeRecordRow[]);
     if (r2 && r2.data && r2.data.length) await mergeWrongBook(r2.data as MergeWrongRow[]);
-    if (r3 && r3.data && r3.data.length) mergeDailyStats(r3.data as MergeDailyRow[]);
     if (r4 && r4.data && r4.data.length) await mergeFavorites(r4.data as MergeFavoriteRow[]);
   } catch {
   }

@@ -93,7 +93,7 @@ export async function startQuiz(btn: HTMLButtonElement): Promise<void> {
     stopTimer();
     if (paperSource !== '') {
       const subject = s ? s.id : subjectId;
-      const yearMatch = /("\d{4})/.exec(paperSource);
+      const yearMatch = /(\d{4})/.exec(paperSource);
       const limit = paperMin > 0 ? paperMin : paperMinutes(subject, Number(yearMatch?.[1] || 0), questions.length);
       paperCtx = { source: paperSource, label: `${s ? s.name : ''} · ${paperSource}`, minutes: limit };
       startTimer(limit);

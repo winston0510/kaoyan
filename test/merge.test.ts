@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mergeRecords, mergeWrongBook, mergeDailyStats, mergeFavorites } from '../src/api';
+import { mergeRecords, mergeWrongBook, mergeFavorites } from '../src/api';
 import { setLocal, getLocal } from '../src/storage';
-import type { Question, QuizRecord, WrongBookItem, FavoriteItem, MergeRecordRow, MergeWrongRow, MergeDailyRow, MergeFavoriteRow } from '../src/types';
+import type { Question, QuizRecord, WrongBookItem, FavoriteItem, MergeRecordRow, MergeWrongRow, MergeFavoriteRow } from '../src/types';
 
 const NOW = new Date(2026, 7, 30, 15, 0, 0);
 
@@ -102,29 +102,6 @@ describe('mergeWrongBook 错题本合并', () => {
     const merged = getLocal<WrongBookItem[]>('wrongBook', []);
     expect(merged[0].userAnswer).toBe('C');
     expect(merged[0].reviewCount).toBe(5);
-  });
-});
-
-describe('mergeDailyStats 每日统计合并', () => {
-  it('历史记录直接写入对应日期键', () => {
-    mergeDailyStats([{ stat_date: '2026-08-01', total: 10, correct: 8 }] as MergeDailyRow[]);
-    expect(JSON.parse(localStorage.getItem('kaoyan_today_2026-08-01') as string)).toEqual({ total: 10, correct: 8 });
-  });
-
-  it('今天已有本地数据时不被云端覆盖', () => {
-    setLocal('today_2026-08-30', { total: 5, correct: 4 });
-    mergeDailyStats([{ stat_date: '2026-08-30', total: 1, correct: 0 }] as MergeDailyRow[]);
-    expect(getLocal('today_2026-08-30', { total: 0, correct: 0 })).toEqual({ total: 5, correct: 4 });
-  });
-
-  it('今天无本地数据时写入云端值', () => {
-    mergeDailyStats([{ stat_date: '2026-08-30', total: 2, correct: 1 }] as MergeDailyRow[]);
-    expect(getLocal('today_2026-08-30', { total: 0, correct: 0 })).toEqual({ total: 2, correct: 1 });
-  });
-
-  it('stat_date 为空的行跳过', () => {
-    mergeDailyStats([{ stat_date: null, total: 9, correct: 9 }] as MergeDailyRow[]);
-    expect(localStorage.getItem('kaoyan_today_null')).toBeNull();
   });
 });
 

@@ -3,7 +3,7 @@ import { quizState, setQuizState } from '../state';
 import { getLocal, setLocal, todayKey } from '../storage';
 import { answerState, markAnswer } from '../progress';
 import { shuffle, formatMath, toast, esc } from '../utils';
-import { loadQuestions, syncFavoriteToDB, syncRecordToDB, syncTodayToDB, syncWrongBookToDB } from '../api';
+import { loadQuestions, syncFavoriteToDB, syncRecordToDB, syncWrongBookToDB } from '../api';
 import { judgeAnswer, formatCorrectAnswer, isManualType, answerLetters } from '../judge';
 import { paperQuestions, paperMinutes } from '../papers';
 import { answerPoints, isRecitable } from '../recite';
@@ -93,7 +93,7 @@ export async function startQuiz(btn: HTMLButtonElement): Promise<void> {
     stopTimer();
     if (paperSource !== '') {
       const subject = s ? s.id : subjectId;
-      const yearMatch = /(\d{4})/.exec(paperSource);
+      const yearMatch = /("\d{4})/.exec(paperSource);
       const limit = paperMin > 0 ? paperMin : paperMinutes(subject, Number(yearMatch?.[1] || 0), questions.length);
       paperCtx = { source: paperSource, label: `${s ? s.name : ''} · ${paperSource}`, minutes: limit };
       startTimer(limit);
@@ -393,7 +393,6 @@ function recordResult(q: Question, userAnswer: string, isCorrect: boolean): void
   todayStats.total++;
   if (isCorrect) todayStats.correct++;
   setLocal('today_' + today, todayStats);
-  void syncTodayToDB(todayStats, today);
 
   const records = getLocal<QuizRecord[]>('records', []);
   const record: QuizRecord = { question_id: q.id ?? null, subject: q.subject, is_correct: isCorrect, user_answer: userAnswer, created_at: new Date().toISOString() };

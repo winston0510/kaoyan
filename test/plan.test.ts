@@ -9,7 +9,7 @@ function rec(subject: string, at: Date, correct = true): QuizRecord {
 describe('parseDate 与 daysLeft', () => {
   it('只接受 YYYY-M-D，非法输入返回 null', () => {
     expect(parseDate('2026-12-19')?.getFullYear()).toBe(2026);
-    expect(parseDate('2026-12-19')).toBeNull();
+    expect(parseDate('2026/12/19')).toBeNull();
     expect(parseDate('')).toBeNull();
   });
   it('倒计时按自然日计算，考试当天为 0', () => {

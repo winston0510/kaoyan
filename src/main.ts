@@ -1,5 +1,6 @@
 import 'katex/dist/katex.min.css';
 import '../css/exam.css';
+import '../css/tablet.css';
 import { initSupabase, pullFromDB, saveConfig } from './api';
 import { APP_VERSION } from './constants';
 import { renderHome, selectMode, openPlanModal, savePlanForm } from './ui/home';

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mergeRecords, mergeWrongBook, mergeFavorites } from '../src/api';
+import { mergeRecords, mergeWrongBook, mergeFavorites, saveMirrorRows } from '../src/api';
 import { setLocal, getLocal } from '../src/storage';
 import type { Question, QuizRecord, WrongBookItem, FavoriteItem, MergeRecordRow, MergeWrongRow, MergeFavoriteRow } from '../src/types';
 
@@ -70,7 +70,7 @@ describe('mergeRecords 答题记录合并', () => {
 
 describe('mergeWrongBook 错题本合并', () => {
   it('仅合并在题目缓存中存在的行', async () => {
-    setLocal('questions', [Q1]);
+    saveMirrorRows([Q1]);
     await mergeWrongBook([
       { question_id: 1, user_answer: 'B', mastered: false, review_count: 1, updated_at: '2026-08-29T10:00:00Z' },
       { question_id: 999, user_answer: 'C', mastered: false, review_count: 0, updated_at: '2026-08-29T10:00:00Z' }
@@ -83,7 +83,7 @@ describe('mergeWrongBook 错题本合并', () => {
   });
 
   it('云端更新更晚时覆盖本地，但 mastered 取或', async () => {
-    setLocal('questions', [Q1]);
+    saveMirrorRows([Q1]);
     const localItem: WrongBookItem = { ...Q1, userAnswer: 'C', mastered: true, reviewCount: 5, wrongTime: new Date('2026-08-28T00:00:00Z').getTime() };
     setLocal('wrongBook', [localItem]);
     await mergeWrongBook([{ question_id: 1, user_answer: 'B', mastered: false, review_count: 2, updated_at: '2026-08-29T10:00:00Z' }] as MergeWrongRow[]);
@@ -95,7 +95,7 @@ describe('mergeWrongBook 错题本合并', () => {
   });
 
   it('云端记录更旧时保留本地', async () => {
-    setLocal('questions', [Q1]);
+    saveMirrorRows([Q1]);
     const localItem: WrongBookItem = { ...Q1, userAnswer: 'C', mastered: false, reviewCount: 5, wrongTime: new Date('2026-08-29T10:00:00Z').getTime() };
     setLocal('wrongBook', [localItem]);
     await mergeWrongBook([{ question_id: 1, user_answer: 'B', mastered: true, review_count: 1, updated_at: '2026-08-28T00:00:00Z' }] as MergeWrongRow[]);
@@ -107,7 +107,7 @@ describe('mergeWrongBook 错题本合并', () => {
 
 describe('mergeFavorites 收藏合并', () => {
   it('仅合并在题目缓存中存在的行', async () => {
-    setLocal('questions', [Q2]);
+    saveMirrorRows([Q2]);
     await mergeFavorites([
       { question_id: 2, subject: 'math2', created_at: '2026-08-29T10:00:00Z' },
       { question_id: 999, subject: 'x', created_at: '2026-08-29T10:00:00Z' }
@@ -119,7 +119,7 @@ describe('mergeFavorites 收藏合并', () => {
   });
 
   it('云端收藏更晚时更新 favoritedAt', async () => {
-    setLocal('questions', [Q2]);
+    saveMirrorRows([Q2]);
     const oldTs = new Date('2026-08-01T00:00:00Z').getTime();
     const localFav: FavoriteItem = { ...Q2, favoritedAt: oldTs };
     setLocal('favorites', [localFav]);
@@ -130,7 +130,7 @@ describe('mergeFavorites 收藏合并', () => {
   });
 
   it('云端收藏更旧时保留本地时间', async () => {
-    setLocal('questions', [Q2]);
+    saveMirrorRows([Q2]);
     const newTs = new Date('2026-08-29T10:00:00Z').getTime();
     const localFav: FavoriteItem = { ...Q2, favoritedAt: newTs };
     setLocal('favorites', [localFav]);

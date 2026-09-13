@@ -94,15 +94,6 @@ export function activeDayKeys(days: DayMap): string[] {
   return Object.keys(days).filter(k => days[k].total > 0);
 }
 
-export function mergeDayMaps(base: DayMap, extra: DayMap): DayMap {
-  const out: DayMap = {};
-  for (const k of Object.keys(base)) out[k] = { ...base[k] };
-  for (const k of Object.keys(extra)) {
-    if (!out[k] || extra[k].total > out[k].total) out[k] = { ...extra[k] };
-  }
-  return out;
-}
-
 export function recordsToDays(records: { created_at?: string | null; is_correct: boolean }[]): DayMap {
   const out: DayMap = {};
   for (const r of records) {

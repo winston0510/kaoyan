@@ -1,17 +1,15 @@
-import { addQuestionToDB, insertQuestionsBatch } from '../api';
-import { questionsCache, setQuestionsCache } from '../state';
-import { getLocal, setLocal } from '../storage';
+import { SUBJECTS } from '../constants';
+import { addQuestionToDB, cachedQuestions, insertQuestionsBatch, saveMirrorRows } from '../api';
 import { toast } from '../utils';
 import { answerLetters } from '../judge';
 import type { Question } from '../types';
 
 function knownQuestions(): Question[] {
-  return questionsCache.length > 0 ? questionsCache : getLocal<Question[]>('questions', []);
+  return cachedQuestions();
 }
 
 function commitQuestions(list: Question[]): void {
-  setQuestionsCache(list);
-  setLocal('questions', list);
+  saveMirrorRows(list);
 }
 
 export function addOption(): void {
@@ -107,11 +105,25 @@ export function importJson(event: Event): void {
   input.value = '';
 }
 
+function demoChapter(subjectId: string, want: string): string {
+  const s = SUBJECTS.find(x => x.id === subjectId);
+  if (!s) return want;
+  if (s.chapters.includes(want)) return want;
+  const section = s.sections.find(sec => sec.name === want || sec.name.includes(want) || want.includes(sec.name));
+  if (section) {
+    const combined = section.name + '·全章综合';
+    if (s.chapters.includes(combined)) return combined;
+    if (s.chapters.includes(section.chapters[0])) return section.chapters[0];
+  }
+  const loose = s.chapters.find(c => c.includes(want));
+  return loose || s.chapters[0];
+}
+
 export function loadDemoData(): void {
   const demo: Question[] = [
-    { subject: 'politics', chapter: '马原', type: 'single', question: '马克思主义哲学认为，世界的统一性在于它的', options: ['A. 存在性', 'B. 运动性', 'C. 物质性', 'D. 可知性'], answer: 'C', explanation: '辩证唯物主义认为，世界的真正统一性在于它的物质性。' },
-    { subject: 'politics', chapter: '马原', type: 'single', question: '矛盾的两种基本属性是', options: ['A. 普遍性和特殊性', 'B. 同一性和斗争性', 'C. 绝对性和相对性', 'D. 对抗性和非对抗性'], answer: 'B', explanation: '矛盾的两种基本属性是同一性和斗争性。' },
-    { subject: 'politics', chapter: '毛中特', type: 'single', question: '毛泽东思想的活的灵魂是', options: ['A. 武装斗争、统一战线、党的建设', 'B. 实事求是、群众路线、独立自主', 'C. 理论联系实际、密切联系群众、批评与自我批评', 'D. 土地革命、武装斗争、根据地建设'], answer: 'B', explanation: '实事求是、群众路线、独立自主是毛泽东思想的活的灵魂。' },
+    { subject: 'politics', chapter: '马原·全章综合', type: 'single', question: '马克思主义哲学认为，世界的统一性在于它的', options: ['A. 存在性', 'B. 运动性', 'C. 物质性', 'D. 可知性'], answer: 'C', explanation: '辩证唯物主义认为，世界的真正统一性在于它的物质性。' },
+    { subject: 'politics', chapter: '马原·全章综合', type: 'single', question: '矛盾的两种基本属性是', options: ['A. 普遍性和特殊性', 'B. 同一性和斗争性', 'C. 绝对性和相对性', 'D. 对抗性和非对抗性'], answer: 'B', explanation: '矛盾的两种基本属性是同一性和斗争性。' },
+    { subject: 'politics', chapter: '毛中特·全章综合', type: 'single', question: '毛泽东思想的活的灵魂是', options: ['A. 武装斗争、统一战线、党的建设', 'B. 实事求是、群众路线、独立自主', 'C. 理论联系实际、密切联系群众、批评与自我批评', 'D. 土地革命、武装斗争、根据地建设'], answer: 'B', explanation: '实事求是、群众路线、独立自主是毛泽东思想的活的灵魂。' },
     { subject: 'politics', chapter: '史纲', type: 'single', question: '中国近代史上第一个不平等条约是', options: ['A. 《北京条约》', 'B. 《天津条约》', 'C. 《南京条约》', 'D. 《马关条约》'], answer: 'C', explanation: '1842年签订的《南京条约》是中国近代史上第一个不平等条约。' },
     { subject: 'politics', chapter: '思修', type: 'single', question: '社会主义道德建设的核心是', options: ['A. 集体主义', 'B. 为人民服务', 'C. 诚实守信', 'D. 爱国主义'], answer: 'B', explanation: '为人民服务是社会主义道德建设的核心。' },
     { subject: 'english2', chapter: '阅读理解', type: 'single', question: 'What is the main idea of the passage about climate change?', options: ['A. Climate change is a hoax', 'B. Climate change requires immediate global action', 'C. Climate change only affects polar regions', 'D. Climate change is beneficial for agriculture'], answer: 'B', explanation: 'Most passages about climate change emphasize the urgency of global action.' },
@@ -130,7 +142,7 @@ export function loadDemoData(): void {
     { subject: 'circuit', chapter: '电阻电路', type: 'essay', question: '简述基尔霍夫电压定律（KVL）的内容及其适用条件。', options: [], answer: '在任一时刻，沿任一闭合回路绕行一周，各段电压降的代数和为零，即 ∑U = 0（仅适用于集总参数电路）。', explanation: 'KVL 反映能量守恒，适用于任何集总参数电路的任一闭合路径。' }
   ];
 
-  demo.forEach((q, i) => { q.id = 10000 + i; q.created_at = new Date().toISOString(); });
+  demo.forEach((q, i) => { q.id = 10000 + i; q.chapter = demoChapter(q.subject, q.chapter); q.created_at = new Date().toISOString(); });
   const existing = knownQuestions();
   let added = 0;
   demo.forEach(q => {

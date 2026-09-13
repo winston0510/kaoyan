@@ -28,6 +28,7 @@ function buildParts(sets: KSet[]): KnowledgePart[] {
       name,
       sections: list.map<KnowledgeSection>(set => ({
         name: set.lecture,
+        pager: set.pager,
         items: set.points.map(p => ({
           title: p.t,
           content: joinBody(p.s, p.tex),

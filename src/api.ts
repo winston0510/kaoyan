@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { SUBJECTS } from './constants';
+import { APP_VERSION, SUBJECTS } from './constants';
 import { db, setDb, questionsCache, setQuestionsCache } from './state';
-import { getLocal, setLocal } from './storage';
+import { getLocal, removeLocal, setLocal } from './storage';
 import { replaceAnswerState } from './progress';
 import { setCloudDays, setCloudSubjects } from './stats';
 import { toast } from './utils';
@@ -48,12 +48,41 @@ function filterBySubject(list: Question[], subject: string): Question[] {
   return list.filter(q => q.subject === subject);
 }
 
-let storageMirror: Question[] | null = null;
+const SHARD_PREFIX = 'questions@';
+const DIR_KEY = 'questionsDir';
+
+function dirFingerprint(): string {
+  return APP_VERSION + '#' + SUBJECTS.map(s => s.id + ':' + s.chapters.join(',')).join('#');
+}
+
+function readShard(subject: string): Question[] {
+  return getLocal<Question[]>(SHARD_PREFIX + subject, []);
+}
+
+function writeShard(subject: string, rows: Question[]): boolean {
+  if (setLocal(SHARD_PREFIX + subject, rows)) return true;
+  removeLocal(SHARD_PREFIX + subject);
+  return false;
+}
+
+let mirrorLoaded = false;
+
+function loadMirror(): Question[] {
+  if (mirrorLoaded) return questionsCache;
+  mirrorLoaded = true;
+  if (getLocal<string>(DIR_KEY, '') !== dirFingerprint()) {
+    SUBJECTS.forEach(s => removeLocal(SHARD_PREFIX + s.id));
+    removeLocal(DIR_KEY);
+    removeLocal('questions');
+    return questionsCache;
+  }
+  setQuestionsCache(SUBJECTS.flatMap(s => readShard(s.id)));
+  return questionsCache;
+}
 
 function cachedQuestions(): Question[] {
   if (questionsCache.length > 0) return questionsCache;
-  if (storageMirror === null) storageMirror = getLocal<Question[]>('questions', []);
-  return storageMirror;
+  return loadMirror();
 }
 
 export function localId(offset = 0): number {
@@ -73,10 +102,21 @@ async function fetchSubjectPage(client: SupabaseClient, subject: string, from: n
 
 function commitSubject(subject: string, rows: Question[]): void {
   const merged = [...cachedQuestions().filter(q => q.subject !== subject), ...rows];
-  storageMirror = merged;
+  if (writeShard(subject, rows)) setLocal(DIR_KEY, dirFingerprint());
   setQuestionsCache(merged);
-  setLocal('questions', merged);
 }
+
+export function saveMirrorRows(rows: Question[]): void {
+  const fp = dirFingerprint();
+  setQuestionsCache(rows);
+  mirrorLoaded = true;
+  for (const s of SUBJECTS) {
+    const part = rows.filter(q => q.subject === s.id);
+    if (part.length > 0 && writeShard(s.id, part)) setLocal(DIR_KEY, fp);
+  }
+}
+
+export { cachedQuestions };
 
 async function fetchFromNetwork(subject: string): Promise<Question[]> {
   const client = db;
@@ -121,7 +161,7 @@ export async function loadQuestions(subject: string): Promise<Question[]> {
   const pending = inflight.get(subject);
   if (pending) return pending;
   const p = fetchFromNetwork(subject)
-    .catch(() => filterBySubject(getLocal<Question[]>('questions', []), subject))
+    .catch(() => filterBySubject(cachedQuestions(), subject))
     .finally(() => inflight.delete(subject));
   inflight.set(subject, p);
   return p;
@@ -273,8 +313,7 @@ export function mergeRecords(rows: MergeRecordRow[]): void {
 
 function questionIndex(): Map<string, Question> {
   const map = new Map<string, Question>();
-  for (const q of getLocal<Question[]>('questions', [])) map.set(String(q.id), q);
-  for (const q of questionsCache) if (!map.has(String(q.id))) map.set(String(q.id), q);
+  for (const q of cachedQuestions()) map.set(String(q.id), q);
   return map;
 }
 
@@ -369,9 +408,7 @@ export async function addQuestionToDB(q: Question): Promise<boolean> {
     if (row && row.id !== undefined) q.id = row.id;
   }
   if (q.id === undefined || q.id === null) q.id = localId();
-  const all = [...cachedQuestions(), q];
-  setQuestionsCache(all);
-  setLocal('questions', all);
+  saveMirrorRows([...cachedQuestions(), q]);
   toast('添加成功！');
   return true;
 }

@@ -6,6 +6,7 @@ export interface KnowledgeItem {
 
 export interface KnowledgeSection {
   name: string;
+  pager?: string;
   items: KnowledgeItem[];
 }
 

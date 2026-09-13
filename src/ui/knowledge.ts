@@ -1,7 +1,7 @@
 import { KNOWLEDGE_TOPICS, type KnowledgeTopic } from '../data/knowledge-data';
 import { onePagerTopic } from '../data/onepagerTopic';
 import { loadOnePager, onePagerSets } from '../onepager';
-import { formatMath } from '../utils';
+import { esc, formatMath } from '../utils';
 
 function mathHtml(s: string): string {
   return formatMath(s.replace(/\n/g, '\u0001')).replace(/\u0001/g, '<br>');
@@ -124,6 +124,7 @@ function renderTopic(t: KnowledgeTopic): void {
       return `<div class="card kt-section open">
         <div class="kt-section-head" onclick="toggleKnowledgeSection(this)">
           <span class="kt-section-name">${s.name}</span>
+          ${s.pager ? `<a class="kt-pdf" href="${esc(s.pager)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📄 原 PDF</a>` : ''}
           <span class="kt-chevron">⌄</span>
         </div>
         <div class="kt-section-body">${itemsHtml}</div>

@@ -1,0 +1,116 @@
+{
+ "slug": "gs14",
+ "lecture": "高数第14讲 二重积分",
+ "chapter": "第5章 二重积分",
+ "pager": "/pagers/gs14.pdf",
+ "points": [
+  {
+   "t": "奇偶对称简化",
+   "k": "方法",
+   "s": "积分域 D 关于 x 轴对称时，把 f(x,y) 看作 y 的奇偶函数：奇函数积分为零，偶函数等于上半部分 D₁ 上积分的二倍。",
+   "tex": "$\\iint_{D} f(x,y)\\mathrm{d}\\sigma=0$，$\\iint_{D} f(x,y)\\mathrm{d}\\sigma=2\\iint_{D_{1}} f(x,y)\\mathrm{d}\\sigma$"
+  },
+  {
+   "t": "轮换对称简化",
+   "k": "方法",
+   "s": "积分域 D 关于 y=x 对称时，对 f(x,y) 无要求，可交换 x,y 后取平均。",
+   "tex": "$\\iint_{D} f(x,y)\\mathrm{d}\\sigma=\\iint_{D} f(y,x)\\mathrm{d}\\sigma=\\frac{1}{2}\\iint_{D}\\left[f(y,x)+f(x,y)\\right]\\mathrm{d}\\sigma$"
+  },
+  {
+   "t": "比较定理",
+   "k": "公式",
+   "s": "被积函数在区域上保持不等关系，则二重积分同向不等。",
+   "tex": "$f(x,y)\\le g(x,y)\\Rightarrow\\iint_{D} f(x,y)\\mathrm{d}\\sigma\\le\\iint_{D} g(x,y)d\\sigma$"
+  },
+  {
+   "t": "估值定理",
+   "k": "公式",
+   "s": "M,m 分别为最大（小）值，A 为 D 的面积。",
+   "tex": "$mA\\le\\iint_{D} f(x,y)\\mathrm{d}\\sigma\\le MA$"
+  },
+  {
+   "t": "中值定理",
+   "k": "公式",
+   "s": "积分等于某点 (ξ, η) 处的函数值乘以区域面积，其中该点属于 D，A 为 D 的面积。",
+   "tex": "$\\iint_{D} f(x,y)d\\sigma=f(\\xi,\\ \\eta)A$"
+  },
+  {
+   "t": "极坐标与直角关系",
+   "k": "公式",
+   "s": "极坐标与直角坐标的互化公式。",
+   "tex": "$x=r\\cos\\theta$，$y=r\\sin\\theta$"
+  },
+  {
+   "t": "面积微元",
+   "k": "公式",
+   "s": "化极坐标时面积微元要多乘一个 r。",
+   "tex": "$d\\sigma=dxdy=rdrd\\theta$"
+  },
+  {
+   "t": "何时优先用极坐标",
+   "k": "口诀",
+   "s": "被积函数含 x²+y²、y/x、x/y，或积分区域是圆或者圆的一部分，满足以上其中一条一般优先选用极坐标。",
+   "tex": "$f(x^{2}+y^{2}),f(\\frac{y}{x}),f(\\frac{x}{y})$"
+  },
+  {
+   "t": "直角坐标累次积分",
+   "k": "步骤",
+   "s": "先 x 后 y 时内层上下限是 y 的函数，先 y 后 x 时内层上下限是 x 的函数。",
+   "tex": "$\\iint_{D} f(x,y)d\\sigma=\\int_{a}^{b}dy\\int_{x_{1}(y)}^{x_{2}(y)}f(x,y)dx=\\int_{c}^{d}dx\\int_{y_{1}(x)}^{y_{2}(x)}f(x,y)dy$"
+  },
+  {
+   "t": "极坐标累次积分",
+   "k": "步骤",
+   "s": "先 r 后 θ 与先 θ 后 r 两种次序，被积函数都要换成 f(r cosθ, r sinθ) 并带上 r。",
+   "tex": "$\\iint_{D} f(x,y)d\\sigma=\\int_{\\theta_{1}}^{\\theta_{2}}d\\theta\\int_{r_{1}(\\theta)}^{r_{2}(\\theta)}f(r\\cos\\theta,r\\sin\\theta)rdr=\\int_{r_{1}}^{r_{2}}rdr\\int_{\\theta_{1}(r)}^{\\theta_{2}(r)}f(r\\cos\\theta,r\\sin\\theta)d\\theta$"
+  },
+  {
+   "t": "极坐标曲线对称性",
+   "k": "方法",
+   "s": "满足第一式则曲线关于 x 轴（极轴）对称，如双纽线；满足第二式则关于 y 轴对称，如心形线。",
+   "tex": "$r(-\\theta)=r(\\theta)$，$r(\\pi-\\theta)=r(\\theta)$，$r^{2}=a^{2}\\cos2\\theta$，$r=a(1+\\sin\\theta)$"
+  },
+  {
+   "t": "交换次序的线索",
+   "k": "方法",
+   "s": "已选次序难以积分，或需求解两个积分时才交换；下列形式对单变量都积不出来。",
+   "tex": "$\\frac{\\sin x}{x},\\frac{\\cos x}{x},\\frac{\\tan x}{x},\\tan x^{2},\\sin\\frac{1}{x},\\cos\\frac{1}{x},\\frac{\\ln(1+x)}{x},\\frac{e^{x}}{x},\\frac{1}{\\ln x},e^{x^{2}}$"
+  },
+  {
+   "t": "交换次序的方法",
+   "k": "步骤",
+   "s": "绘制积分区域，重新选择积分次序，直角和极坐标一同考虑。",
+   "tex": ""
+  },
+  {
+   "t": "直线的极坐标方程",
+   "k": "公式",
+   "s": "过原点的斜线写成 θ 为常数；平行于坐标轴的直线用正割、余割；斜率为负一的直线化成一个分式。",
+   "tex": "$y=x\\to\\theta=\\frac{\\pi}{4}$，$y=\\sqrt{3}x\\to\\theta=\\frac{\\pi}{3}$，$x=a\\to r=a\\sec\\theta$，$y=a\\to r=a\\csc\\theta$，$x+y=a\\to r=\\frac{a}{\\cos\\theta+\\sin\\theta}$"
+  },
+  {
+   "t": "正弦反函数分段",
+   "k": "公式",
+   "s": "y=sin x 反解 x 要按 x 所在区间分三段写，交换积分次序时常用。",
+   "tex": "$x=\\arcsin y$，$x=\\pi-\\arcsin y$，$x=2\\pi+\\arcsin y$"
+  },
+  {
+   "t": "交换次序示例",
+   "k": "公式",
+   "s": "先对 y 积分的区域改写成先对 x 积分，内层上下限由正弦的反函数给出。",
+   "tex": "$\\int_{\\pi}^{2\\pi}dx\\int_{\\sin x}^{0}f(x,y)dy=\\int_{-1}^{0}dy\\int_{\\pi-\\arcsin y}^{2\\pi+\\arcsin y}f(x,y)dx$"
+  },
+  {
+   "t": "二重变限求导",
+   "k": "易错",
+   "s": "特征是内层下限含外层变量。g(x,t) 中含 t，无法直接对上限含 t 的积分求 t 的导，此时需交换次序。",
+   "tex": "$f(t)=\\int_{0}^{t}dx\\int_{x}^{t}f(x,y)dy=\\int_{0}^{t}g(x,t)dx$"
+  },
+  {
+   "t": "一般换元法",
+   "k": "公式",
+   "s": "作变换 x=x(u,v)、y=y(u,v)，区域换成 Duv 并乘雅可比行列式的绝对值，行列式由四个偏导排成。",
+   "tex": "$\\iint_{D_{xy}} f(x,y)dxdy=\\iint_{D_{uv}} f[x(u,v),y(u,v)]\\left|\\frac{\\partial(x,y)}{\\partial(u,v)}\\right|dudv$，$\\left|\\frac{\\partial(x,y)}{\\partial(u,v)}\\right|=\\begin{vmatrix}\\frac{\\partial x}{\\partial u}&\\frac{\\partial x}{\\partial v}\\\\\\frac{\\partial y}{\\partial u}&\\frac{\\partial y}{\\partial v}\\end{vmatrix}$"
+  }
+ ]
+}

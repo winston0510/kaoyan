@@ -1,0 +1,116 @@
+{
+ "slug": "gs01-02",
+ "lecture": "高数第1-2讲 函数与极限",
+ "chapter": "第1章 函数、极限、连续",
+ "pager": "/pagers/gs01-02.pdf",
+ "points": [
+  {
+   "t": "奇偶与周期传递",
+   "k": "概念",
+   "s": "奇函数导函数为偶、不定积分为偶；偶函数导函数为奇、不定积分不一定奇。周期 T 的函数求导仍为周期 T，变上限积分不一定是周期函数。",
+   "tex": "$f\\ \\text{奇}\\Rightarrow f'\\ \\text{偶},\\ \\int f(x)\\mathrm{d}x\\ \\text{偶};\\qquad f\\ \\text{偶}\\Rightarrow f'\\ \\text{奇},\\ F(x)=\\int_0^x f(t)\\mathrm{d}t\\ \\text{不一定周期}$"
+  },
+  {
+   "t": "三角与反三角恒等",
+   "k": "公式",
+   "s": "1+tan²x=sec²x，1+cot²x=csc²x；y=sin x 的反函数 y=arcsin x，x 限在 −π/2≤x≤π/2。",
+   "tex": "$1+\\tan^{2}x=\\sec^{2}x,\\ 1+\\cot^{2}x=\\csc^{2}x;\\quad \\arcsin x+\\arccos x=\\dfrac{\\pi}{2},\\ \\arctan x+\\operatorname{arccot} x=\\dfrac{\\pi}{2}$"
+  },
+  {
+   "t": "极限局部保号性",
+   "k": "概念",
+   "s": "若 x→x₀ 时 f(x)→A＞0（或＜0），则存在 δ＞0，使 0＜|x−x₀|＜δ 时 f(x)＞0（或＜0）；x→∞ 版本把条件换成 |x|≥X（X＞0）。",
+   "tex": "$\\lim_{x\\to x_0}f(x)=A>0(\\text{或}<0)\\ \\Rightarrow\\ \\exists\\,\\delta>0,\\ 0<|x-x_0|<\\delta\\ \\text{时}\\ f(x)>0(\\text{或}<0)$"
+  },
+  {
+   "t": "无穷小四条性质",
+   "k": "概念",
+   "s": "有限个无穷小的代数和为无穷小；有限个无穷小的乘积为无穷小；无穷小乘以有界变量为无穷小；同一变化过程中 f(x) 是无穷大，则其倒数为无穷小。",
+   "tex": "$f(x)\\ \\text{为无穷大}\\ \\Rightarrow\\ \\dfrac{1}{f(x)}\\ \\text{为无穷小},\\qquad \\text{无穷小}\\cdot(\\text{有界变量})=\\text{无穷小}$"
+  },
+  {
+   "t": "无穷小阶的比较",
+   "k": "公式",
+   "s": "0/0 型极限为 0 则 f 是 g 的高阶无穷小，为 ∞ 则低阶，为 c（≠1,0）则同阶非等价，为 1 则等价；f 是 x 的 k 阶无穷小即 lim f/x^k 为非零常数。",
+   "tex": "$\\lim_{x\\to 0}\\dfrac{f(x)}{x^{k}}=c\\neq 0,\\qquad \\mathrm{e}^{\\tan x}-\\mathrm{e}^{\\sin x}\\ \\text{是}\\ x\\ \\text{的 3 阶无穷小}\\ \\left(\\sim\\dfrac{1}{2}x^{3},\\ x\\to 0\\right)$"
+  },
+  {
+   "t": "原始等价无穷小",
+   "k": "公式",
+   "s": "原始等价：sin、tan、arcsin、arctan 与 x；e^x−1、ln(1+x)、a^x−1 与 x；1−cos x 与 x²/2；(1+x)^α−1 与 αx。",
+   "tex": "$\\sin x\\sim x,\\ \\tan x\\sim x,\\ \\arcsin x\\sim x,\\ \\arctan x\\sim x,\\ \\mathrm{e}^{x}-1\\sim x,\\ \\ln(1+x)\\sim x,\\ a^{x}-1\\sim x\\ln a,\\ 1-\\cos x\\sim\\dfrac{1}{2}x^{2},\\ (1+x)^{\\alpha}-1\\sim\\alpha x\\ (\\alpha\\neq 0)$"
+  },
+  {
+   "t": "差值固定搭配",
+   "k": "公式",
+   "s": "页面把加减型差值单列为「固定搭配」：正三角与反三角差到三阶，x−ln(1+x) 差到二阶，尾项写成 o(x^n)。",
+   "tex": "$x-\\sin x=\\dfrac{1}{6}x^{3}+o(x^{3}),\\ x-\\arcsin x=-\\dfrac{1}{6}x^{3}+o(x^{3}),\\ x-\\tan x=-\\dfrac{1}{3}x^{3}+o(x^{3}),\\ x-\\arctan x=\\dfrac{1}{3}x^{3}+o(x^{3})$"
+  },
+  {
+   "t": "泰勒展开四口诀",
+   "k": "口诀",
+   "s": "e^x【口诀】完美：各项均 x^n/n! 且不缺项；sin x【+−奇】正负交替仅奇数项；cos x【+−偶】正负交替仅偶数项；ln(1+x)【+−无!】正负交替无阶乘。",
+   "tex": "$f(x)=f(0)+f'(0)x+\\dfrac{f''(0)}{2!}x^{2}+\\cdots+\\dfrac{f^{(n)}(0)}{n!}x^{n}+o(x^{n});\\qquad \\ln(1+x)=x-\\dfrac{1}{2}x^{2}+\\cdots+\\dfrac{(-1)^{n-1}}{n}x^{n}+o(x^{n})$"
+  },
+  {
+   "t": "洛必达三条件",
+   "k": "步骤",
+   "s": "①满足 0/0 型或 ∞/∞ 型；②f(x)、g(x) 在 x₀ 去心邻域内可导且 g′(x)≠0；③f′/g′ 的极限为有限实数或无穷大。反例 (x+cos x)/x 不可洛。",
+   "tex": "$\\lim_{x\\to x_0}\\dfrac{f'(x)}{g'(x)}\\ \\text{为有限实数或无穷大};\\qquad \\lim_{x\\to\\infty}\\dfrac{x+\\cos x}{x}\\ \\text{不可洛}$"
+  },
+  {
+   "t": "几个常用极限",
+   "k": "公式",
+   "s": "ⁿ√n→1；x→0⁺ 时 x^x→1；arctan x 在 x→−∞、+∞ 时为 −π/2、π/2；e^x 相应为 0、+∞；x^σ ln x→0（x→0⁺，σ为正）。",
+   "tex": "$\\lim_{n\\to\\infty}\\sqrt[n]{n}=1,\\ \\lim_{x\\to 0^{+}}x^{x}=1,\\ \\lim_{x\\to-\\infty}\\arctan x=-\\dfrac{\\pi}{2},\\ \\lim_{x\\to+\\infty}\\arctan x=\\dfrac{\\pi}{2},\\ \\lim_{x\\to-\\infty}\\mathrm{e}^{x}=0,\\ \\lim_{x\\to+\\infty}\\mathrm{e}^{x}=+\\infty$"
+  },
+  {
+   "t": "七种未定式关系",
+   "k": "概念",
+   "s": "关系图：0/0 与 ∞/∞ 是落点，0·∞ 可化成它们；1^∞、∞^0、0^0 再化到 0·∞；∞−∞ 另列一类。",
+   "tex": "$\\dfrac{0}{0},\\ \\dfrac{\\infty}{\\infty}\\ \\Longleftarrow\\ 0\\cdot\\infty\\ \\Longleftarrow\\ 1^{\\infty},\\ \\infty^{0},\\ 0^{0};\\qquad \\infty-\\infty$"
+  },
+  {
+   "t": "幂指型取对数",
+   "k": "方法",
+   "s": "1^∞、∞^0、0^0 型取对数后化为 0·∞ 型；1^∞ 另解：1^∞=(1+0)^∞=e^(0·∞)。示例 x→0⁺ 时 lim x^sin2x=1。",
+   "tex": "$\\lim_{x\\to 0^{+}}(\\cot x)^{\\frac{1}{\\ln x}}=\\mathrm{e}^{-1},\\qquad \\lim_{x\\to+\\infty}\\left[\\dfrac{\\left(1+\\frac{1}{x}\\right)^{x}}{\\mathrm{e}}\\right]^{x}=\\mathrm{e}^{-\\frac{1}{2}}$"
+  },
+  {
+   "t": "无穷减无穷四招",
+   "k": "方法",
+   "s": "∞−∞ 型可通分、先倒代换、根式有理化或提取公因式；0·∞ 型化为 ∞ 分之 ∞ 或 0 分之 0 型。",
+   "tex": "$\\lim_{x\\to 0}\\left(\\dfrac{1}{x^{2}}-\\cot^{2}x\\right)=\\dfrac{2}{3};\\ \\lim_{x\\to+\\infty}\\left[x^{2}\\left(\\mathrm{e}^{\\frac{1}{x}}-1\\right)-x\\right]=\\dfrac{1}{2};\\ \\lim_{x\\to+\\infty}\\left(2x-\\sqrt{4x^{2}+4x+2}\\right)=-1$"
+  },
+  {
+   "t": "极限拆分条件",
+   "k": "易错",
+   "s": "lim f=A、lim g=B 时才有 lim(f±g)=A±B、lim(f·g)=A·B；只有子极限均存在时，才可拆开。",
+   "tex": "$\\lim f=A,\\ \\lim g=B\\ \\Rightarrow\\ \\lim(f\\pm g)=A\\pm B,\\ \\lim(f\\cdot g)=A\\cdot B$"
+  },
+  {
+   "t": "间断点与连续",
+   "k": "概念",
+   "s": "第一类（左右极限均存在）：相等为可去、不等为跳跃；第二类：无穷间断点（至少一侧无穷大）、振荡间断点（至少一侧振荡且极限不存在）。连续即函数值=左极限值=右极限值。",
+   "tex": "$\\lim_{x\\to x_0^{-}}f(x)=\\lim_{x\\to x_0^{+}}f(x)\\ (\\text{可去}),\\qquad \\lim_{x\\to x_0^{-}}f(x)\\neq\\lim_{x\\to x_0^{+}}f(x)\\ (\\text{跳跃})$"
+  },
+  {
+   "t": "需分左右侧的极限",
+   "k": "易错",
+   "s": "x→0 处 arctan(1/x)、e^(1/x)、sin x/|x|、[x] 四类必须分别求左右极限，其中 [x] 表示不超过 x 的最大整数。",
+   "tex": "$\\lim_{x\\to 0^{+}}\\arctan\\dfrac{1}{x}=\\dfrac{\\pi}{2},\\ \\lim_{x\\to 0^{-}}\\arctan\\dfrac{1}{x}=-\\dfrac{\\pi}{2};\\quad \\lim_{x\\to 0^{+}}\\mathrm{e}^{\\frac{1}{x}}=+\\infty,\\ \\lim_{x\\to 0^{-}}\\mathrm{e}^{\\frac{1}{x}}=0$"
+  },
+  {
+   "t": "夹逼与单调有界",
+   "k": "方法",
+   "s": "夹逼定理：x_n≤y_n≤z_n 且两端极限同为 a，则 y_n 极限为 a；单调有界准则：单调递增有上界（或单调递减有下界）的数列必有极限。",
+   "tex": "$\\lim_{n\\to\\infty}\\sqrt[n]{x^{n}+y^{n}}=\\max (x,y)\\ (x,y>0);\\qquad \\sqrt{\\dfrac{a^{2}+b^{2}}{2}}\\ge\\dfrac{a+b}{2}\\ge\\sqrt{ab}$"
+  },
+  {
+   "t": "无界与无穷大",
+   "k": "易错",
+   "s": "无穷大量一定是无界变量，但无界变量不一定是无穷大量。示例：n 为奇数时取 n、偶数时取 0 的数列是无界变量而不是无穷大。",
+   "tex": "$\\{x_n\\}\\ \\text{无穷大}:\\ \\forall M>0,\\ \\exists N,\\ n>N\\ \\text{时恒有}\\ |x_n|>M;\\qquad \\{x_n\\}\\ \\text{无界}:\\ \\forall M>0,\\ \\exists N,\\ |x_N|>M$"
+  }
+ ]
+}

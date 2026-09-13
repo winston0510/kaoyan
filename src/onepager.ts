@@ -39,11 +39,12 @@ export function onePagerSets(): KSet[] {
   return sets;
 }
 
+const shards = import.meta.glob('./data/onepager/*.json', { import: 'default' });
+
 export function loadOnePager(): Promise<boolean> {
   if (sets.length > 0) return Promise.resolve(true);
   if (!pending) {
-    pending = fetch('/onepager.json')
-      .then(r => (r.ok ? r.json() : []))
+    pending = Promise.all(Object.keys(shards).sort().map(k => (shards[k] as () => Promise<KSet>)()))
       .then(rows => {
         setOnePager(rows);
         return sets.length > 0;

@@ -1,0 +1,116 @@
+{
+ "slug": "gs08-12",
+ "lecture": "高数第8-12讲 一元积分",
+ "chapter": "第3章 一元函数积分学",
+ "pager": "/pagers/gs08-12.pdf",
+ "points": [
+  {
+   "t": "华里士公式",
+   "k": "公式",
+   "s": "sinⁿx 与 cosⁿx 在 0 到 π/2 上积分相等，逐层降阶连乘；n 为偶数末尾乘 π/2，n 为奇数末尾乘 1",
+   "tex": "$\\int_0^{\\frac{\\pi}{2}}\\sin^nx\\,dx=\\int_0^{\\frac{\\pi}{2}}\\cos^nx\\,dx=\\begin{cases}\\dfrac{n-1}{n}\\cdot\\dfrac{n-3}{n-2}\\cdots\\dfrac{1}{2}\\cdot\\dfrac{\\pi}{2},&n\\text{为偶数}\\\\\\dfrac{n-1}{n}\\cdot\\dfrac{n-3}{n-2}\\cdots\\dfrac{2}{3}\\cdot1,&n\\text{为奇数}\\end{cases}$"
+  },
+  {
+   "t": "对称区间奇偶简化",
+   "k": "公式",
+   "s": "上下限关于原点对称时，先合并成 f(x)+f(−x) 再判奇偶：奇函数积分为 0，偶函数取 2 倍半区间",
+   "tex": "$\\int_{-l}^{l}f(x)dx=\\int_0^{l}\\left[f(x)+f(-x)\\right]dx=\\begin{cases}0,&f(x)\\text{为奇函数}\\\\2\\int_0^{l}f(x)dx,&f(x)\\text{为偶函数}\\end{cases}$"
+  },
+  {
+   "t": "周期与几何意义简化",
+   "k": "公式",
+   "s": "周期函数在任一同长区间上积分相等；√(a²−x²) 在 0 到 a 上的积分就是四分之一圆面积",
+   "tex": "$\\int_a^{a+T}f(x)dx=\\int_0^{T}f(x)dx=\\int_{-\\frac{T}{2}}^{\\frac{T}{2}}f(x)dx,\\qquad \\int_0^{a}\\sqrt{a^2-x^2}\\,dx=\\frac{1}{4}\\pi a^2$"
+  },
+  {
+   "t": "常用积分公式表",
+   "k": "公式",
+   "s": "三角类与对数类必背：csc²→−cot，tan→−ln|cos|，cot→ln|sin|，csc→ln|csc−cot|；分母同乘共轭得对数式",
+   "tex": "$\\int\\frac{dx}{\\cos^2x}=\\tan x+C,\\quad \\int\\frac{dx}{\\sin^2x}=-\\cot x+C,\\quad \\int\\sec x\\,dx=\\ln|\\sec x+\\tan x|+C,\\quad \\int\\tan x\\,dx=-\\ln|\\cos x|+C,\\quad \\int\\frac{dx}{\\sqrt{x^2\\pm a^2}}=\\ln\\left|x+\\sqrt{x^2\\pm a^2}\\right|+C$"
+  },
+  {
+   "t": "变限积分求导",
+   "k": "公式",
+   "s": "上下限都含 x 时：上限代入乘上限的导数，减去下限代入乘下限的导数。漏乘内层导数是最常见错误",
+   "tex": "$\\left(\\int_{\\phi(x)}^{\\varphi(x)}f(t)dt\\right)^{\\prime}_{x}=f\\left[\\varphi(x)\\right]\\varphi^{\\prime}(x)-f\\left[\\phi(x)\\right]\\phi^{\\prime}(x)$"
+  },
+  {
+   "t": "化为纯t的四条恒等式",
+   "k": "方法",
+   "s": "被积函数里混着 x 时先换元把 x 挪出积分号，再求导；含 f(xt) 的要用 u=xt 化简，且须注明 x≠0",
+   "tex": "$\\int_0^{x}f(x-t)dt=\\int_0^{x}f(u)du,\\qquad \\int_0^{x}(x-t)f(t)dt=x\\int_0^{x}f(t)dt-\\int_0^{x}tf(t)dt,\\qquad \\int_0^{1}f(xt)dt=\\frac{1}{x}\\int_0^{x}f(u)du\\ (x\\neq 0)$"
+  },
+  {
+   "t": "积分嵌套求函数",
+   "k": "步骤",
+   "s": "①把整个定积分记作常数 A ②代回原式 ③两边再积分得到关于 A 的方程求解；二元情形把 ∫ 换成 ∬_D dσ",
+   "tex": "$f(x)=g(x)+\\int_a^{b}f(x)dx,\\ \\text{令}\\ A=\\int_a^{b}f(x)dx,\\ \\text{进而}\\ A=\\int_a^{b}\\left[g(x)+A\\right]dx$"
+  },
+  {
+   "t": "区间再现",
+   "k": "公式",
+   "s": "作 x→a+b−x 的替换区间形态不变；正弦简化把系数 x 换成 π/2。含 1/(1+eˣ) 的对称区间题用它消去指数",
+   "tex": "$\\int_a^{b}f(x)dx=\\int_a^{b}f(a+b-x)dx,\\qquad \\int_0^{\\pi}xf(\\sin x)dx=\\frac{\\pi}{2}\\int_0^{\\pi}f(\\sin x)dx,\\qquad \\int_{-\\frac{\\pi}{2}}^{\\frac{\\pi}{2}}\\frac{\\sin^4x}{1+e^{x}}dx=\\frac{3\\pi}{16}$"
+  },
+  {
+   "t": "分部积分四类适用",
+   "k": "方法",
+   "s": "①对变限积分函数再积分 ②形如 xf′ ③含对数或反三角（例 ∫x ln x dx、∫arctan x dx）④形如 xeˣ、x sin x、x cos x",
+   "tex": "$\\int u\\,dv=uv-\\int v\\,du$"
+  },
+  {
+   "t": "积分中值定理与推广",
+   "k": "公式",
+   "s": "普通中值要求 f 连续；推广形式要求 f、g 连续且 g 不变号。示例：f 连续时 lim ∫₀¹ xⁿf(x)dx = 0",
+   "tex": "$\\bar{f}=\\frac{\\int_a^{b}f(x)dx}{b-a},\\qquad \\int_a^{b}f(x)dx=f(\\xi)(b-a),\\qquad \\int_a^{b}f(x)g(x)dx=f(\\xi)\\int_a^{b}g(x)dx,\\qquad \\lim_{n\\to\\infty}\\int_0^{1}x^{n}f(x)dx=0$"
+  },
+  {
+   "t": "三角代换对照表",
+   "k": "方法",
+   "s": "表中还给出 sin t、cos t 的回代：x=a tan t 时 sin t=x/√(a²+x²)、cos t=a/√(a²+x²)；x=a sec t 时 cos t=a/x",
+   "tex": "$\\sqrt{a^{2}-x^{2}}\\Rightarrow x=a\\sin t;\\qquad \\sqrt{a^{2}+x^{2}}\\Rightarrow x=a\\tan t;\\qquad \\sqrt{x^{2}-a^{2}}\\Rightarrow x=a\\sec t$"
+  },
+  {
+   "t": "根式与倒代换",
+   "k": "口诀",
+   "s": "根式中无平方，用根式整体代换；分母分子阶次差 2 阶及以上，用倒代换",
+   "tex": "$\\int\\frac{dx}{\\sqrt{1+e^{x}}}=\\int\\frac{2dt}{t^{2}-1}=2\\ln\\left(\\sqrt{1+e^{x}}-1\\right)-x+C;\\qquad \\int\\frac{dx}{x(1+x^{2})}=\\int\\frac{-t\\,dt}{t^{2}+1}=-\\frac{1}{2}\\ln\\left(1+\\frac{1}{x^{2}}\\right)+C$"
+  },
+  {
+   "t": "有理函数拆分步骤",
+   "k": "步骤",
+   "s": "①假分式用观察法或长除法分成多项式加真分式 ②按分母中的因子分解 ③求系数用待定系数法或留数法（暇点法）",
+   "tex": "$\\frac{1}{x(x^{2}-1)(x+1)}=\\frac{1}{x(x-1)(x+1)^{2}}=\\frac{A}{x}+\\frac{B}{x-1}+\\frac{C}{x+1}+\\frac{D}{(x+1)^{2}},\\quad A=-1,\\ B=\\frac{1}{4},\\ C=\\frac{3}{4},\\ D=\\frac{1}{2}$"
+  },
+  {
+   "t": "参比积分p判别",
+   "k": "公式",
+   "s": "瑕点在 0 一侧是 p 小于 1 收敛；无穷区间一侧是 p 大于 1 收敛。两个方向上临界值 p=1 都发散，别记反",
+   "tex": "$\\int_0^{1}\\frac{1}{x^{p}}dx=\\begin{cases}\\text{收敛},&0<p<1\\\\ \\text{发散},&p\\ge 1\\end{cases},\\qquad \\int_1^{+\\infty}\\frac{1}{x^{p}}dx=\\begin{cases}\\text{收敛},&p>1\\\\ \\text{发散},&p\\le 1\\end{cases}$"
+  },
+  {
+   "t": "反常积分审敛法",
+   "k": "方法",
+   "s": "被积函数无穷小时与 1/xᵖ 比（x→+∞）；无穷大时与 1/(x−a)ᵖ 比（x→a⁺）。l 有界且 p 足够大则收敛，l 不为零且 p 不够大则发散",
+   "tex": "$\\lim_{x\\to+\\infty}\\frac{f(x)}{1/x^{p}}=l:\\ \\text{若}\\ 0\\le l<+\\infty,\\ p>1,\\ \\text{则}\\\\int_a^{+\\infty}f(x)dx\\ \\text{收敛};\\ \\text{若}\\ 0<l\\le+\\infty,\\ p\\le1,\\ \\text{则发散}$"
+  },
+  {
+   "t": "幂对数反常积分",
+   "k": "公式",
+   "s": "先看幂次 m 与 1 的关系，只有 m=1 这一临界情形才由对数指数 n 决定敛散",
+   "tex": "$\\int_2^{+\\infty}\\frac{1}{x^{m}\\ln^{n}x}dx\\ (m,n>0):\\quad m>1\\ \\text{必收敛};\\quad m=1:\\ n>1\\ \\text{收敛},\\ n\\le1\\ \\text{发散};\\quad m<1\\ \\text{必发散}$"
+  },
+  {
+   "t": "几何微元汇总",
+   "k": "公式",
+   "s": "面积微元直角坐标取 ydx 或 xdy、极坐标取 ½r²dθ；体积微元分圆盘与柱壳；表面积 dS=2πr·ds（数三不要求）",
+   "tex": "$dA=y\\,dx\\ \\text{或}\\ x\\,dy,\\quad dA=\\frac{1}{2}r^{2}d\\theta;\\qquad dV=\\pi r^{2}dx\\ (\\text{圆盘}),\\quad dV=2\\pi r\\cdot y\\,dx\\ (\\text{柱壳});\\qquad ds=\\sqrt{1+y^{\\prime2}}\\,dx=\\sqrt{r^{2}+r^{\\prime2}}\\,d\\theta$"
+  },
+  {
+   "t": "可积与原函数存在",
+   "k": "易错",
+   "s": "可积必要条件是有界；连续、只有有限个间断点、只有有限个第一类间断点、单调有界均可保证可积。但含第一类间断点的函数必无原函数，含第二类间断点的可能有",
+   "tex": ""
+  }
+ ]
+}

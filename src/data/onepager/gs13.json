@@ -1,0 +1,116 @@
+{
+ "slug": "gs13",
+ "lecture": "高数第13讲 多元微分学",
+ "chapter": "第4章 多元函数微分学",
+ "pager": "/pagers/gs13.pdf",
+ "points": [
+  {
+   "t": "二元极限存在条件",
+   "k": "概念",
+   "s": "极限存在要求各个路径极限一致；只要两个路径极限不同即可判不存在，通常取特例。",
+   "tex": "$y=kx$"
+  },
+  {
+   "t": "特殊路径判不存在",
+   "k": "方法",
+   "s": "取特殊路径 y=kx 代入，若所得极限与 k 有关，则二元极限不存在。",
+   "tex": "$\\lim_{(x,y)\\to(0,0)}\\frac{xy}{x^{2}+y^{2}}=\\frac{k}{1+k^{2}}$"
+  },
+  {
+   "t": "夹逼求二元极限",
+   "k": "方法",
+   "s": "经典例子：按下式放缩，可得该分式在原点的二重极限为零。",
+   "tex": "$0\\le\\left|\\frac{xy}{\\sqrt{x^{2}+y^{2}}}\\right|\\le\\left|\\frac{xy}{\\sqrt{2xy}}\\right|\\Rightarrow\\lim_{(x,y)\\to(0,0)}\\frac{xy}{\\sqrt{x^{2}+y^{2}}}=0$"
+  },
+  {
+   "t": "二元函数连续",
+   "k": "概念",
+   "s": "连续指极限值等于函数值，与一元函数一致。",
+   "tex": "$\\lim_{(x,y)\\to(x_{0},y_{0})}f(x,y)=f(x_{0},y_{0})$"
+  },
+  {
+   "t": "偏导数的定义",
+   "k": "公式",
+   "s": "对某个变量的偏导，是把其余变量固定后的一元差商极限。",
+   "tex": "$f'_{x}(x_{0},y_{0})=\\lim_{\\Delta x\\to0}\\frac{f(x_{0}+\\Delta x,y_{0})-f(x_{0},y_{0})}{\\Delta x}$，$f'_{y}(x_{0},y_{0})=\\lim_{\\Delta y\\to0}\\frac{f(x_{0},y_{0}+\\Delta y)-f(x_{0},y_{0})}{\\Delta y}$"
+  },
+  {
+   "t": "可微的判别式",
+   "k": "公式",
+   "s": "其中 ρ 为增量长度，Δz 为函数在全增量下的改变量。",
+   "tex": "$\\lim_{\\rho\\to0}\\frac{\\Delta z-(f'_{x}\\Delta x+f'_{y}\\Delta y)}{\\rho}=0$，$\\rho=\\sqrt{(\\Delta x)^{2}+(\\Delta y)^{2}}$"
+  },
+  {
+   "t": "全微分与偏导",
+   "k": "公式",
+   "s": "由全微分形式可直接读出两个偏导数。",
+   "tex": "$dz=Adx+Bdy\\Rightarrow A=\\frac{\\partial z}{\\partial x},\\;B=\\frac{\\partial z}{\\partial y}$"
+  },
+  {
+   "t": "四大概念Y型关系",
+   "k": "概念",
+   "s": "Y 型关系只有三个箭头：偏导连续推可微，可微分别推连续与偏导存在。",
+   "tex": ""
+  },
+  {
+   "t": "复合函数链式法则",
+   "k": "公式",
+   "s": "设 z=f(u,v)，u=φ(x,y)，v=ψ(x,y)，对 x、y 各写成两条相加。",
+   "tex": "$\\frac{\\partial z}{\\partial x}=\\frac{\\partial z}{\\partial u}\\cdot\\frac{\\partial u}{\\partial x}+\\frac{\\partial z}{\\partial v}\\cdot\\frac{\\partial v}{\\partial x}$，$\\frac{\\partial z}{\\partial y}=\\frac{\\partial z}{\\partial u}\\cdot\\frac{\\partial u}{\\partial y}+\\frac{\\partial z}{\\partial v}\\cdot\\frac{\\partial v}{\\partial y}$"
+  },
+  {
+   "t": "全微分形式不变性",
+   "k": "概念",
+   "s": "无论 u,v 是自变量还是中间变量，该全微分式总成立。",
+   "tex": "$z=f(u,v)\\Rightarrow dz=\\frac{\\partial z}{\\partial u}du+\\frac{\\partial z}{\\partial v}dv$"
+  },
+  {
+   "t": "隐函数存在定理",
+   "k": "概念",
+   "s": "F 在点 (x₀,y₀,z₀) 的某一邻域内有连续偏导数，且该点处 F 为零、F 对 z 的偏导不为零，则能唯一确定偏导数连续的 z=f(x,y)。",
+   "tex": "$F(x_{0},y_{0},z_{0})=0,\\;F'_{z}(x_{0},y_{0},z_{0})\\neq0$"
+  },
+  {
+   "t": "隐函数求导公式",
+   "k": "公式",
+   "s": "两个偏导都等于负的 F 对相应变量的偏导除以 F 对 z 的偏导。",
+   "tex": "$\\frac{\\partial z}{\\partial x}=-\\frac{F'_{x}(x,y,z)}{F'_{z}(x,y,z)}$，$\\frac{\\partial z}{\\partial y}=-\\frac{F'_{y}(x,y,z)}{F'_{z}(x,y,z)}$"
+  },
+  {
+   "t": "二阶偏导复合关系",
+   "k": "概念",
+   "s": "若 z=f[u(x,y),v(x,y)]，则 f′x、f′y、f″xx、f″xy、f″yy 与 f 具有相同复合关系。",
+   "tex": ""
+  },
+  {
+   "t": "极值定义与驻点",
+   "k": "易错",
+   "s": "去心邻域内恒大于该点函数值为极小值、恒小为极大值。先求驻点，但偏导不存在的点也可能是极值点。",
+   "tex": "$f'_{x}(x_{0},y_{0})=0,\\;f'_{y}(x_{0},y_{0})=0$"
+  },
+  {
+   "t": "极值第二判别法",
+   "k": "公式",
+   "s": "记 f″xx=A、f″xy=B、f″yy=C。判别式大于零有极值，A 大于零取极小、小于零取极大；等于零不确定；小于零无极值。",
+   "tex": "$f''_{xx}(x_{0},y_{0})=A,\\;f''_{xy}(x_{0},y_{0})=B,\\;f''_{yy}(x_{0},y_{0})=C,\\;AC-B^{2}$"
+  },
+  {
+   "t": "偏导反求原函数",
+   "k": "公式",
+   "s": "由二阶求一阶、由一阶求原函数都要积分，积分常数是另一变量的函数；关于 f(g(x,y)) 的偏导方程可化为常微分。",
+   "tex": "$f'_{x}(x,y)=\\int f''_{xx}dx+c(y)=\\int f''_{xy}dy+c(x)$，$f(x,y)=\\int f'_{x}dx+c(y)=\\int f'_{y}dy+c(x)$"
+  },
+  {
+   "t": "条件极值拉格朗日",
+   "k": "方法",
+   "s": "作拉格朗日函数，对 x,y,z,λ,μ 分别求偏导并令为零，解方程求出可能极值点，再取各点函数值比较最大最小。",
+   "tex": "$F(x,y,z,\\lambda,\\mu)=f(x,y,z)+\\lambda\\varphi(x,y,z)+\\mu\\psi(x,y,z)$"
+  },
+  {
+   "t": "闭区域上的最值",
+   "k": "步骤",
+   "s": "边界上用条件极值，区域内用普通极值（无需二阶导判别），最后比较大小。",
+   "tex": ""
+  }
+ ]
+}

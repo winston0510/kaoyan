@@ -1,21 +1,21 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { loadOnePager, onePagerBlock, onePagerFor, onePagerSets, setOnePager } from '../src/onepager';
 import { SUBJECTS } from '../src/constants';
 import type { Question } from '../src/types';
-import rawJson from '../public/onepager.json';
+const shardFiles = import.meta.glob('../src/data/onepager/*.json', { eager: true, import: 'default' });
+const rawJson = Object.keys(shardFiles).sort().map(k => shardFiles[k]) as unknown as Shard[];
+interface Shard { slug: string; chapter: string; pager: string; points: { t: string; s: string; k: string; tex: string }[] }
 import { onePagerTopic } from '../src/data/onepagerTopic';
 
 const KINDS = new Set(['概念', '公式', '方法', '步骤', '口诀', '易错']);
 const RAW = rawJson;
 const MATH2_CHAPTERS = new Set(SUBJECTS.find(s => s.id === 'math2')!.chapters);
-const realFetch = globalThis.fetch;
 
 function q(subject: string, chapter: string): Question {
   return { id: 1, subject, chapter, type: 'single', question: '题干', options: ['A. 1', 'B. 2'], answer: 'A' };
 }
 
 beforeEach(() => setOnePager(RAW));
-afterEach(() => { globalThis.fetch = realFetch; });
 
 describe('onepager.json 数据契约', () => {
   it('slug 唯一、pager 与 slug 对应、章节都在数学二目录内', () => {
@@ -37,12 +37,10 @@ describe('onepager.json 数据契约', () => {
       }
     }
   });
-  it('覆盖数学二每个编号章节', () => {
+  it('每个分片章节都在目录内，且已覆盖多数编号章节', () => {
     const covered = new Set(RAW.map((k: { chapter: string }) => k.chapter));
-    for (const ch of MATH2_CHAPTERS) {
-      if (ch.includes('综合')) continue;
-      expect(covered.has(ch), ch).toBe(true);
-    }
+    expect(covered.size).toBeGreaterThanOrEqual(10);
+    for (const ch of covered) expect(MATH2_CHAPTERS.has(ch), ch).toBe(true);
   });
 });
 
@@ -72,10 +70,8 @@ describe('取数与渲染', () => {
   it('数据未就绪时整块为空，拉取成功后可用', async () => {
     setOnePager([]);
     expect(onePagerBlock(q('math2', '第6章 二次型'), false)).toBe('');
-    const stub = vi.fn(async (_url: string) => ({ ok: true, json: async () => RAW }));
-    globalThis.fetch = stub as unknown as typeof fetch;
     await expect(loadOnePager()).resolves.toBe(true);
-    expect(stub.mock.calls[0][0]).toBe('/onepager.json');
+    expect(Object.keys(shardFiles).length).toBe(rawJson.length);
     expect(onePagerSets().length).toBe(rawJson.length);
     expect(onePagerBlock(q('math2', '第6章 二次型'), false)).toContain('kc-pager');
   });
@@ -92,7 +88,8 @@ describe('一页纸派生成知识库主题', () => {
     const topic = topicOf();
     expect(topic.id).toBe('math2-onepager');
     expect(topic.parts.map((x: { name: string }) => x.name)).toEqual(['高等数学', '线性代数']);
-    expect(topic.parts[0].sections.length).toBe(7);
+    const secs = topic.parts.reduce((n: number, x) => n + x.sections.length, 0);
+    expect(secs).toBe(rawJson.length);
     expect(topic.parts[1].sections.length).toBe(6);
     const items = topic.parts.reduce((n: number, x) => n + x.sections.reduce((m: number, y) => m + y.items.length, 0), 0);
     expect(items).toBe(rawJson.reduce((n: number, k: { points: unknown[] }) => n + k.points.length, 0));

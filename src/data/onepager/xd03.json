@@ -92,7 +92,25 @@
    "t": "线表推出秩不等式",
    "k": "概念",
    "s": "若向量组 A 可由向量组 B 线性表示，则 A 的秩不超过 B 的秩。",
-   "tex": "若 $\\beta_1,\\beta_2,\\cdots,\\beta_t$ 可由... "
+   "tex": "若向量组 $A$ 可由向量组 $B$ 线性表示，则 $r(A)\\leq r(B)$"
+  },
+  {
+   "t": "秩少量多则相关",
+   "k": "口诀",
+   "s": "表示方的向量个数多于被表示方时，表示方必然线性相关。",
+   "tex": "若 $\\beta_1,\\beta_2,\\cdots,\\beta_t$ 可由 $\\alpha_1,\\alpha_2,\\cdots,\\alpha_s$ 线性表示，且 $t>s$，则 $\\beta_1,\\beta_2,\\cdots,\\beta_t$ 线性相关"
+  },
+  {
+   "t": "施密特正交化公式",
+   "k": "公式",
+   "s": "α1、α2、α3 线性无关，则可构造 β1、β2、β3 使其两两正交。",
+   "tex": "$\\beta_1=\\alpha_1$，$\\beta_2=\\alpha_2-\\dfrac{(\\alpha_2,\\beta_1)}{(\\beta_1,\\beta_1)}\\beta_1$，$\\beta_3=\\alpha_3-\\dfrac{(\\alpha_3,\\beta_1)}{(\\beta_1,\\beta_1)}\\beta_1-\\dfrac{(\\alpha_3,\\beta_2)}{(\\beta_2,\\beta_2)}\\beta_2$"
+  },
+  {
+   "t": "基与过渡矩阵",
+   "k": "公式",
+   "s": "仅数一：由基 α 组到基 β 组的过渡矩阵 C 满足 β 组等于 α 组乘 C；同一向量在两组基下的坐标满足 X=CY。",
+   "tex": "$\\left(\\beta_1,\\beta_2,\\cdots,\\beta_n\\right)=\\left(\\alpha_1,\\alpha_2,\\cdots,\\alpha_n\\right)C$，坐标变换 $X=CY$，其中 $X=\\left(x_1,x_2,\\cdots,x_n\\right)^T$，$Y=\\left(y_1,y_2,\\cdots,y_n\\right)^T$"
   }
  ]
 }

@@ -3,10 +3,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { APP_VERSION, SUBJECTS } from './constants';
 import { db, setDb, questionsCache, setQuestionsCache } from './state';
 import { getLocal, removeLocal, setLocal } from './storage';
-import { replaceAnswerState } from './progress';
+import { answerState, replaceAnswerState } from './progress';
 import { setCloudDays, setCloudSubjects } from './stats';
 import { toast } from './utils';
-import type { Question, QuizRecord, MergeRecordRow, MergeWrongRow, MergeFavoriteRow, WrongBookItem, FavoriteItem, DirectoryRow } from './types';
+import type { Question, QuestionType, QuizRecord, MergeRecordRow, MergeWrongRow, MergeFavoriteRow, WrongBookItem, FavoriteItem, DirectoryRow } from './types';
 
 export function initSupabase(): boolean {
   const url = localStorage.getItem('supabase_url');
@@ -109,30 +109,42 @@ function withTimeout<T>(task: PromiseLike<T>, ms: number): Promise<T> {
   });
 }
 
-async function fetchPage<T>(client: SupabaseClient, cols: string, subject: string, from: number, timeoutMs: number, retries: number): Promise<T[]> {
-  let lastError = new Error('题库分页失败');
+type PagedQuery = PromiseLike<{ data: unknown; error: { message: string } | null }>;
+
+async function runQuery<T>(task: () => PagedQuery, timeoutMs: number, retries: number): Promise<T[]> {
+  let lastError: unknown = new Error('题库分页失败');
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const { data, error } = await withTimeout(
-        client
-          .from('questions')
-          .select(cols)
-          .eq('subject', subject)
-          .order('id', { ascending: true })
-          .range(from, from + PAGE_SIZE - 1) as unknown as PromiseLike<{ data: unknown; error: { message: string } | null }>,
-        timeoutMs
-      );
+      const { data, error } = await withTimeout(task(), timeoutMs);
       if (error) throw new Error(error.message);
       return (data || []) as T[];
     } catch (e) {
-      lastError = e instanceof Error ? e : new Error('题库分页失败');
+      lastError = e;
     }
   }
-  throw lastError;
+  throw lastError instanceof Error ? lastError : new Error('题库分页失败');
+}
+
+function fetchQuestionPage<T>(client: SupabaseClient, subject: string, from: number, cols: string, timeoutMs: number, retries: number): Promise<T[]> {
+  return runQuery<T>(() => client
+    .from('questions')
+    .select(cols)
+    .eq('subject', subject)
+    .order('id', { ascending: true })
+    .range(from, from + PAGE_SIZE - 1) as unknown as PagedQuery, timeoutMs, retries);
+}
+
+function fetchViewPage<T>(client: SupabaseClient, view: string, subject: string, order: string): Promise<T[]> {
+  return runQuery<T>(() => client
+    .from(view)
+    .select('*')
+    .eq('subject', subject)
+    .order(order, { ascending: true })
+    .range(0, PAGE_SIZE - 1) as unknown as PagedQuery, DIR_TIMEOUT_MS, DIR_RETRY);
 }
 
 async function fetchSubjectPage(client: SupabaseClient, subject: string, from: number): Promise<Question[]> {
-  return fetchPage<Question>(client, '*', subject, from, ROWS_TIMEOUT_MS, ROWS_RETRY);
+  return fetchQuestionPage<Question>(client, subject, from, '*', ROWS_TIMEOUT_MS, ROWS_RETRY);
 }
 
 function commitSubject(subject: string, rows: Question[]): void {
@@ -193,7 +205,7 @@ async function fetchDirectory(subject: string, onProgress?: (idx: DirIndex) => v
   for (let page = 0; page < MAX_PAGES; page++) {
     let chunk: DirectoryRow[];
     try {
-      chunk = await fetchPage<DirectoryRow>(client, DIR_COLS, subject, page * PAGE_SIZE, DIR_TIMEOUT_MS, DIR_RETRY);
+      chunk = await fetchQuestionPage<DirectoryRow>(client, subject, page * PAGE_SIZE, DIR_COLS, DIR_TIMEOUT_MS, DIR_RETRY);
     } catch (e) {
       error = e instanceof Error ? e.message : '目录请求失败';
       break;
@@ -269,6 +281,167 @@ export function warmSubjectQuestions(subject: string): void {
   if (filterBySubject(cachedQuestions(), subject).length > 0) return;
   warmed.add(subject);
   void loadQuestions(subject).catch(() => undefined);
+}
+
+const CHAPTER_VIEW = 'v_chapter_counts';
+const PAPER_VIEW = 'v_paper_counts';
+const VIEW_STALE_MS = 6 * 60 * 60 * 1000;
+const PRACTICE_KEY = 'practicedRows';
+
+export interface ChapterCount {
+  chapter: string;
+  total: number;
+}
+
+export interface SourceCount {
+  subject: string;
+  source: string;
+  type: QuestionType;
+  total: number;
+}
+
+export interface PracticedRow {
+  id?: number | string;
+  subject: string;
+  chapter: string;
+  source?: string;
+}
+
+export interface DirView {
+  at: number;
+  complete: boolean;
+  fromViews: boolean;
+  chapters: ChapterCount[];
+  sources: SourceCount[];
+  practiced: PracticedRow[];
+  error?: string;
+}
+
+async function fetchViewRows<T>(client: SupabaseClient, view: string, subject: string, order: string): Promise<T[]> {
+  const chunk = await fetchViewPage<T>(client, view, subject, order);
+  if (chunk.length >= PAGE_SIZE) throw new Error('计数视图超出单页上限');
+  return chunk;
+}
+
+function cachedPracticedRows(): PracticedRow[] | null {
+  const ids = Object.keys(answerState());
+  if (ids.length === 0) return [];
+  const cached = getLocal<{ at: number; ids: number; rows: PracticedRow[] } | null>(PRACTICE_KEY, null);
+  if (!cached || cached.ids !== ids.length || !Array.isArray(cached.rows)) return null;
+  return Date.now() - cached.at > VIEW_STALE_MS ? null : cached.rows;
+}
+
+async function fetchPracticedRows(client: SupabaseClient): Promise<PracticedRow[]> {
+  const hit = cachedPracticedRows();
+  if (hit) return hit;
+  const ids = Object.keys(answerState());
+  if (ids.length === 0) return [];
+  const rows: PracticedRow[] = [];
+  for (let i = 0; i < ids.length; i += ID_CHUNK) {
+    const part = ids.slice(i, i + ID_CHUNK).map(Number).filter(n => !Number.isNaN(n));
+    if (part.length === 0) continue;
+    try {
+      const chunk = await runQuery<PracticedRow>(() => client
+        .from('questions')
+        .select('id,subject,chapter,source')
+        .in('id', part) as unknown as PagedQuery, DIR_TIMEOUT_MS, DIR_RETRY);
+      for (const r of chunk) rows.push(r);
+    } catch {
+      break;
+    }
+  }
+  setLocal(PRACTICE_KEY, { at: Date.now(), ids: ids.length, rows });
+  return rows;
+}
+
+function emptyView(at: number, error: string): DirView {
+  return { at, complete: false, fromViews: false, chapters: [], sources: [], practiced: [], error };
+}
+
+function viewFromRows(rows: DirectoryRow[]): DirView {
+  const state = answerState();
+  const chapters = new Map<string, number>();
+  const sources = new Map<string, number>();
+  const practiced: PracticedRow[] = [];
+  for (const r of rows) {
+    chapters.set(r.chapter, (chapters.get(r.chapter) || 0) + 1);
+    const key = r.subject + '|' + (r.source || '') + '|' + r.type;
+    sources.set(key, (sources.get(key) || 0) + 1);
+    if (r.id !== undefined && state[String(r.id)] !== undefined) {
+      practiced.push({ id: r.id, subject: r.subject, chapter: r.chapter, source: r.source });
+    }
+  }
+  return {
+    at: Date.now(),
+    complete: true,
+    fromViews: false,
+    chapters: [...chapters].map(([chapter, total]) => ({ chapter, total })),
+    sources: [...sources].map(([key, total]) => {
+      const [subject, source, type] = key.split('|');
+      return { subject, source, type: type as QuestionType, total };
+    }),
+    practiced
+  };
+}
+
+const viewInflight = new Map<string, Promise<DirView>>();
+const COUNTS_PREFIX = 'questionsCounts@';
+
+function readViewCache(subject: string): DirView | null {
+  const raw = getLocal<DirView | null>(COUNTS_PREFIX + subject, null);
+  if (!raw || !Array.isArray(raw.chapters) || !Array.isArray(raw.sources)) return null;
+  return raw;
+}
+
+async function fetchDirView(subject: string): Promise<DirView> {
+  const client = db;
+  if (!client) {
+    const idx = await loadDirectory(subject);
+    return idx.rows.length > 0 ? viewFromRows(idx.rows) : emptyView(0, idx.error || '未连接 Supabase');
+  }
+  let viewError = '';
+  try {
+    const [chapters, sources, practiced] = await Promise.all([
+      fetchViewRows<ChapterCount>(client, CHAPTER_VIEW, subject, 'chapter'),
+      fetchViewRows<SourceCount>(client, PAPER_VIEW, subject, 'source'),
+      fetchPracticedRows(client)
+    ]);
+    return { at: Date.now(), complete: true, fromViews: true, chapters, sources, practiced };
+  } catch (e) {
+    viewError = e instanceof Error ? e.message : '计数视图不可用';
+  }
+  const idx = await loadDirectory(subject);
+  if (idx.rows.length > 0) return viewFromRows(idx.rows);
+  return emptyView(0, viewError || '计数与目录均不可用');
+}
+
+function runViewFetch(subject: string, onUpdate?: (v: DirView) => void): Promise<DirView> {
+  const running = viewInflight.get(subject);
+  if (running) {
+    if (onUpdate) running.then(v => onUpdate(v)).catch(() => undefined);
+    return running;
+  }
+  const p = fetchDirView(subject).then(v => {
+    if (v.complete) setLocal(COUNTS_PREFIX + subject, v);
+    return v;
+  }).finally(() => {
+    if (viewInflight.get(subject) === p) viewInflight.delete(subject);
+  });
+  viewInflight.set(subject, p);
+  return p;
+}
+
+export function loadDirView(subject: string, onUpdate?: (v: DirView) => void): Promise<DirView> {
+  const cached = readViewCache(subject);
+  if (cached) {
+    if (Date.now() - cached.at > VIEW_STALE_MS) void runViewFetch(subject, onUpdate);
+    return Promise.resolve(cached);
+  }
+  return runViewFetch(subject);
+}
+
+export function refreshDirView(subject: string, onUpdate?: (v: DirView) => void): Promise<DirView> {
+  return runViewFetch(subject, onUpdate);
 }
 
 async function fetchFromNetwork(subject: string): Promise<Question[]> {

@@ -2,7 +2,7 @@ import { SUBJECTS } from '../constants';
 import { getLocal } from '../storage';
 import { answerState } from '../progress';
 import { esc, toast } from '../utils';
-import { loadQuestions } from '../api';
+import { hasCloud, loadDirectory, loadQuestions, refreshDirectory, warmSubjectQuestions } from '../api';
 import { isPaperSource, listPapers, paperLabel, paperMinutes, paperQuestions } from '../papers';
 import { paperDoneFor } from '../plan';
 import { switchPage } from './navigation';
@@ -22,20 +22,31 @@ export function openSubject(subjectId: string): void {
 
 interface ChapterStat { name: string; total: number; practiced: number; wrong: number }
 
+async function retryDirectory(subjectId: string): Promise<void> {
+  const fresh = await refreshDirectory(subjectId).catch(() => null);
+  if (!fresh || !fresh.complete || currentSubject !== subjectId) return;
+  void renderSubject();
+}
+
 export async function renderSubject(): Promise<void> {
   const s = SUBJECTS.find(x => x.id === currentSubject);
   const content = document.getElementById('subjectContent');
   if (!s || !content) return;
+  const subjectId = currentSubject;
   const titleEl = document.getElementById('subjectTitle');
   if (titleEl) titleEl.textContent = s.name;
 
   content.innerHTML = '<div class="subject-loading">加载中…</div>';
 
-  const questions = await loadQuestions(currentSubject).catch(() => null);
-  if (questions === null) {
-    content.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">题库加载失败</div><div class="empty-desc">请检查网络后返回重试</div></div>';
+  const dir = await loadDirectory(subjectId);
+  if (currentSubject !== subjectId) return;
+  if (dir.rows.length === 0 && hasCloud()) {
+    content.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">目录未加载</div><div class="empty-desc">请检查网络后重试</div><button class="btn btn-outline btn-sm" onclick="renderSubject()">重试</button></div>';
     return;
   }
+  const questions = dir.rows;
+  if (!dir.complete) void retryDirectory(subjectId);
+  else warmSubjectQuestions(subjectId);
   const state = answerState();
   const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []).filter(w => w.subject === currentSubject && !w.mastered);
 
@@ -81,7 +92,7 @@ export async function renderSubject(): Promise<void> {
       </div>
     </div>
     <button class="btn btn-primary btn-sm" onclick="openQuizModal('${s.id}', '', '')">开始</button>
-  </div>`;
+  </div>${dir.complete ? '' : `<div class="paper-note">目录未拉全（已显示 ${totalAll} 题），<span class="dir-retry" onclick="renderSubject()">点这里重试</span></div>`}`;
 
   const paperAgg = new Map<string, { total: number; practiced: number }>();
   for (const q of questions) {

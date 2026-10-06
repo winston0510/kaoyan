@@ -1,4 +1,4 @@
-import type { Question } from './types';
+import type { DirectoryRow, Question } from './types';
 
 export interface PaperInfo {
   source: string;
@@ -40,8 +40,8 @@ export function isPaperSource(source?: string): boolean {
   return REAL.test(s) || STYLE.test(s);
 }
 
-export function listPapers(questions: Question[]): PaperInfo[] {
-  const groups = new Map<string, Question[]>();
+export function listPapers(questions: DirectoryRow[]): PaperInfo[] {
+  const groups = new Map<string, DirectoryRow[]>();
   for (const q of questions) {
     const s = (q.source || '').trim();
     if (!isPaperSource(s)) continue;

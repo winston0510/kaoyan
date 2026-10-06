@@ -34,7 +34,7 @@ export async function renderSubject(): Promise<void> {
 
   const paint = (view: DirView): void => {
     if (currentSubject !== subjectId) return;
-    const countsUnknown = view.chapters.length === 0;
+    const countsUnknown = view.chapters.length === 0 && !view.complete;
     const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []).filter(w => w.subject === subjectId && !w.mastered);
 
     const chapterTotals = new Map<string, number>();

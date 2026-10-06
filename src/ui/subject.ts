@@ -1,12 +1,12 @@
 import { SUBJECTS } from '../constants';
 import { getLocal } from '../storage';
+import { answerState } from '../progress';
 import { esc, toast } from '../utils';
-import { hasCloud, loadDirView, loadQuestions, refreshDirView, warmSubjectQuestions } from '../api';
-import type { DirView } from '../api';
-import { isPaperSource, paperFromCounts, paperLabel, paperMinutes, paperQuestions } from '../papers';
+import { loadQuestions } from '../api';
+import { isPaperSource, listPapers, paperLabel, paperMinutes, paperQuestions } from '../papers';
 import { paperDoneFor } from '../plan';
 import { switchPage } from './navigation';
-import type { QuestionType, WrongBookItem } from '../types';
+import type { WrongBookItem } from '../types';
 
 let currentSubject = '';
 
@@ -26,136 +26,121 @@ export async function renderSubject(): Promise<void> {
   const s = SUBJECTS.find(x => x.id === currentSubject);
   const content = document.getElementById('subjectContent');
   if (!s || !content) return;
-  const subjectId = currentSubject;
   const titleEl = document.getElementById('subjectTitle');
   if (titleEl) titleEl.textContent = s.name;
 
   content.innerHTML = '<div class="subject-loading">加载中…</div>';
 
-  const paint = (view: DirView): void => {
-    if (currentSubject !== subjectId) return;
-    const countsUnknown = view.chapters.length === 0 && !view.complete;
-    const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []).filter(w => w.subject === subjectId && !w.mastered);
+  const questions = await loadQuestions(currentSubject).catch(() => null);
+  if (questions === null) {
+    content.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">题库加载失败</div><div class="empty-desc">请检查网络后返回重试</div></div>';
+    return;
+  }
+  const state = answerState();
+  const wrongBook = getLocal<WrongBookItem[]>('wrongBook', []).filter(w => w.subject === currentSubject && !w.mastered);
 
-    const chapterTotals = new Map<string, number>();
-    for (const c of view.chapters) chapterTotals.set(c.chapter, (chapterTotals.get(c.chapter) || 0) + c.total);
-    const practicedRows = view.practiced.filter(p => p.subject === subjectId);
-    const chapterPracticed = new Map<string, number>();
-    for (const p of practicedRows) chapterPracticed.set(p.chapter, (chapterPracticed.get(p.chapter) || 0) + 1);
-    const chapterWrong = new Map<string, number>();
-    for (const w of wrongBook) chapterWrong.set(w.chapter || '', (chapterWrong.get(w.chapter || '') || 0) + 1);
+  const practicedIds = (id?: number | string) => id !== undefined && state[String(id)] !== undefined;
 
-    const stat = (name: string): ChapterStat => ({
-      name,
-      total: chapterTotals.get(name) || 0,
-      practiced: chapterPracticed.get(name) || 0,
-      wrong: chapterWrong.get(name) || 0
-    });
+  const stats = new Map<string, ChapterStat>();
+  for (const q of questions) {
+    let st = stats.get(q.chapter);
+    if (!st) { st = { name: q.chapter, total: 0, practiced: 0, wrong: 0 }; stats.set(q.chapter, st); }
+    st.total += 1;
+    if (practicedIds(q.id)) st.practiced += 1;
+  }
+  for (const w of wrongBook) {
+    const st = stats.get(w.chapter || '');
+    if (st) st.wrong += 1;
+  }
+  const emptyStat = (name: string): ChapterStat => ({ name, total: 0, practiced: 0, wrong: 0 });
 
-    const known = new Set(s.chapters);
-    const sections = s.sections.map(sec => ({ name: sec.name, stats: sec.chapters.map(stat) }));
-    const extraNames = [...new Set(view.chapters.filter(c => !known.has(c.chapter)).map(c => c.chapter))];
-    if (extraNames.length > 0) {
-      sections.push({ name: '其他章节', stats: extraNames.map(stat) });
-    }
+  const known = new Set(s.chapters);
+  const sections = s.sections.map(sec => ({
+    name: sec.name,
+    stats: sec.chapters.map(name => stats.get(name) || emptyStat(name))
+  }));
+  const extraNames = [...new Set(questions.filter(q => !known.has(q.chapter)).map(q => q.chapter))];
+  if (extraNames.length > 0) {
+    sections.push({ name: '其他章节', stats: extraNames.map(name => stats.get(name) || emptyStat(name)) });
+  }
 
-    const totalAll = view.chapters.reduce((a, c) => a + c.total, 0);
-    const practicedAll = practicedRows.length;
-    const wrongAll = wrongBook.length;
+  let practicedAll = 0;
+  for (const st of stats.values()) practicedAll += st.practiced;
+  const totalAll = questions.length;
+  const wrongAll = wrongBook.length;
 
-    const escAttr = (v: string) => v.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  const escAttr = (v: string) => v.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
-    const noteHtml = view.complete ? '' : hasCloud()
-      ? `<div class="paper-note">${view.at === 0 ? '目录加载中' : countsUnknown ? '目录未加载' : `目录未拉全（已显示 ${totalAll} 题）`}：${esc(view.error || '网络较慢')}，<span class="dir-retry" onclick="renderSubject()">点这里重试</span></div>`
-      : '<div class="paper-note">未连接 Supabase：章节可浏览，题目数请在「管理」填入连接信息</div>';
-
-    const heroHtml = `<div class="subject-hero">
-      <div class="sh-info">
-        <div class="sh-title">整科刷题</div>
-        <div class="sh-stats">
-          <span>${countsUnknown ? '题目数待加载' : `共 <b>${totalAll}</b> 题`}</span>
-          <span>已练 <b>${practicedAll}</b></span>
-          ${wrongAll > 0 ? `<span class="text-danger">未掌握 <b>${wrongAll}</b></span>` : ''}
-        </div>
+  const heroHtml = `<div class="subject-hero">
+    <div class="sh-info">
+      <div class="sh-title">整科刷题</div>
+      <div class="sh-stats">
+        <span>共 <b>${totalAll}</b> 题</span>
+        <span>已练 <b>${practicedAll}</b></span>
+        ${wrongAll > 0 ? `<span class="text-danger">未掌握 <b>${wrongAll}</b></span>` : ''}
       </div>
-      <button class="btn btn-primary btn-sm" onclick="openQuizModal('${s.id}', '', '')">开始</button>
-    </div>${noteHtml}`;
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="openQuizModal('${s.id}', '', '')">开始</button>
+  </div>`;
 
-    const paperTally = new Map<string, Array<{ type: QuestionType; total: number }>>();
-    for (const row of view.sources) {
-      if (row.subject !== subjectId) continue;
-      const src = (row.source || '').trim();
-      if (!isPaperSource(src)) continue;
-      const arr = paperTally.get(src);
-      if (arr) arr.push({ type: row.type, total: row.total });
-      else paperTally.set(src, [{ type: row.type, total: row.total }]);
-    }
-    const paperPracticed = new Map<string, number>();
-    for (const p of practicedRows) {
-      const src = (p.source || '').trim();
-      if (!isPaperSource(src)) continue;
-      paperPracticed.set(src, (paperPracticed.get(src) || 0) + 1);
-    }
-    const papers = [...paperTally]
-      .map(([source, tally]) => paperFromCounts(subjectId, source, tally))
-      .sort((a, b) => b.year - a.year || Number(a.style) - Number(b.style));
-    let paperHtml = '';
-    if (papers.length > 0) {
-      const cards = papers.map(p => {
-        const practiced = paperPracticed.get(p.source) || 0;
-        const done = paperDoneFor(p.source, s.id);
-        const typeText = ['single', 'multiple', 'fill', 'essay', 'judge'].filter(t => p.types[t]).map(t => `${TYPE_SHORT[t]}${p.types[t]}`).join(' ');
-        const badge = done
-          ? `<span class="paper-done">整卷完成 ${Math.round(done.correct / Math.max(1, done.total) * 100)}%</span>`
-          : (p.complete ? '<span class="paper-full">完整卷</span>' : `<span class="paper-part">缺 ${Math.max(0, p.expected - p.total)} 题</span>`);
-        return `<div class="paper-card" onclick="openPaperModal('${s.id}', '${escAttr(p.source)}')">
-          <div class="pc-name">${esc(paperLabel(p))}</div>
-          <div class="pc-meta">${esc(typeText)} · 已练 ${practiced}/${p.total} · 建议 ${paperMinutes(s.id, p.year, p.total)} 分</div>
-          <div class="pc-right">${badge}<span class="subject-arrow">›</span></div>
-        </div>`;
-      }).join('');
-      const note = s.id === 'circuit' ? '<div class="paper-note">870 无官方公开真题，以下为真题风格套卷</div>' : '';
-      paperHtml = `<div class="section-header"><div class="section-title">真题套卷</div><div class="section-meta">${papers.length} 套</div></div>${note}${cards}`;
-    }
-
-    const sectionHtml = sections.map(sec => {
-      const secTotal = sec.stats.reduce((a, c) => a + c.total, 0);
-      const secPracticed = sec.stats.reduce((a, c) => a + c.practiced, 0);
-      const secWrong = sec.stats.reduce((a, c) => a + c.wrong, 0);
-      const headerHtml = `<div class="section-header">
-        <div class="section-title">${esc(sec.name)}</div>
-        <div class="section-meta">
-          ${secWrong > 0 ? `<span class="wrong-badge">${secWrong} 未掌握</span>` : ''}
-          <span class="section-stats">${secPracticed}/${secTotal} 已练</span>
-          <button class="btn btn-outline btn-sm section-start" onclick="event.stopPropagation(); openQuizModal('${s.id}', '', '${escAttr(sec.name)}')">刷题</button>
-        </div>
+  const paperAgg = new Map<string, { total: number; practiced: number }>();
+  for (const q of questions) {
+    const src = (q.source || '').trim();
+    if (!isPaperSource(src)) continue;
+    const agg = paperAgg.get(src) || { total: 0, practiced: 0 };
+    agg.total += 1;
+    if (practicedIds(q.id)) agg.practiced += 1;
+    paperAgg.set(src, agg);
+  }
+  const papers = listPapers(questions).filter(p => (paperAgg.get(p.source)?.total || 0) > 0);
+  let paperHtml = '';
+  if (papers.length > 0) {
+    const cards = papers.map(p => {
+      const agg = paperAgg.get(p.source) || { total: p.total, practiced: 0 };
+      const done = paperDoneFor(p.source, s.id);
+      const typeText = ['single', 'multiple', 'fill', 'essay', 'judge'].filter(t => p.types[t]).map(t => `${TYPE_SHORT[t]}${p.types[t]}`).join(' ');
+      const badge = done
+        ? `<span class="paper-done">整卷完成 ${Math.round(done.correct / Math.max(1, done.total) * 100)}%</span>`
+        : (p.complete ? '<span class="paper-full">完整卷</span>' : `<span class="paper-part">缺 ${Math.max(0, p.expected - p.total)} 题</span>`);
+      return `<div class="paper-card" onclick="openPaperModal('${s.id}', '${escAttr(p.source)}')">
+        <div class="pc-name">${esc(paperLabel(p))}</div>
+        <div class="pc-meta">${esc(typeText)} · 已练 ${agg.practiced}/${agg.total} · 建议 ${paperMinutes(s.id, p.year, agg.total)} 分</div>
+        <div class="pc-right">${badge}<span class="subject-arrow">›</span></div>
       </div>`;
-      const cardsHtml = sec.stats.map(c => `<div class="chapter-card" onclick="openQuizModal('${s.id}', '${escAttr(c.name)}', '')">
-        <div class="cc-name">${esc(c.name)}</div>
-        <div class="cc-meta">
-          ${c.wrong > 0 ? `<span class="wrong-badge">${c.wrong} 未掌握</span>` : ''}
-          ${c.total === 0 ? `<span class="cc-empty">${countsUnknown ? '计数待加载' : '暂无题目'}</span>` : `<span class="cc-progress">${c.practiced}/${c.total} 已练</span>`}
-          <span class="subject-arrow">›</span>
-        </div>
-      </div>`).join('');
-      return headerHtml + cardsHtml;
     }).join('');
+    const note = s.id === 'circuit' ? '<div class="paper-note">870 无官方公开真题，以下为真题风格套卷</div>' : '';
+    paperHtml = `<div class="section-header"><div class="section-title">真题套卷</div><div class="section-meta">${papers.length} 套</div></div>${note}${cards}`;
+  }
 
-    content.innerHTML = heroHtml + paperHtml + sectionHtml;
-  };
+  const sectionHtml = sections.map(sec => {
+    const secTotal = sec.stats.reduce((a, c) => a + c.total, 0);
+    const secPracticed = sec.stats.reduce((a, c) => a + c.practiced, 0);
+    const secWrong = sec.stats.reduce((a, c) => a + c.wrong, 0);
+    const headerHtml = `<div class="section-header">
+      <div class="section-title">${esc(sec.name)}</div>
+      <div class="section-meta">
+        ${secWrong > 0 ? `<span class="wrong-badge">${secWrong} 未掌握</span>` : ''}
+        <span class="section-stats">${secPracticed}/${secTotal} 已练</span>
+        <button class="btn btn-outline btn-sm section-start" onclick="event.stopPropagation(); openQuizModal('${s.id}', '', '${escAttr(sec.name)}')">刷题</button>
+      </div>
+    </div>`;
+    const cardsHtml = sec.stats.map(c => `<div class="chapter-card" onclick="openQuizModal('${s.id}', '${escAttr(c.name)}', '')">
+      <div class="cc-name">${esc(c.name)}</div>
+      <div class="cc-meta">
+        ${c.wrong > 0 ? `<span class="wrong-badge">${c.wrong} 未掌握</span>` : ''}
+        ${c.total === 0 ? '<span class="cc-empty">暂无题目</span>' : `<span class="cc-progress">${c.practiced}/${c.total} 已练</span>`}
+        <span class="subject-arrow">›</span>
+      </div>
+    </div>`).join('');
+    return headerHtml + cardsHtml;
+  }).join('');
 
-  const emptyView: DirView = { at: 0, complete: false, fromViews: false, chapters: [], sources: [], practiced: [] };
-  const revealTimer = setTimeout(() => paint(emptyView), 2500);
-  const view = await loadDirView(subjectId, v => { clearTimeout(revealTimer); paint(v); });
-  clearTimeout(revealTimer);
-  if (!view.complete && hasCloud()) void refreshDirView(subjectId, paint);
-  paint(view);
+  content.innerHTML = heroHtml + paperHtml + sectionHtml;
 }
 
 export function openQuizModal(subjectId: string, chapter: string, section: string): void {
   const s = SUBJECTS.find(x => x.id === subjectId);
   if (!s) return;
-  warmSubjectQuestions(subjectId);
   const scope = chapter || '';
   const sec = section || '';
   const sectionChapters = sec !== '' ? (s.sections.find(x => x.name === sec)?.chapters || []) : [];

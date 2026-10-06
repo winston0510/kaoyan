@@ -6,6 +6,17 @@
 
 ---
 
+## 回退（2026-10-07）：生产环境代码回到 v4.13.1
+
+> 用户决定回退（原话：确实回退到 4.13.1）。`APP_VERSION` 与 `sw.js` 缓存名一并回到 `v4.13.1` / `kaoyan-v4.13.1`。
+
+- 做法：`src/api.ts`、`src/ui/subject.ts`、`src/papers.ts`、`src/types.ts`、`src/constants.ts`、`public/sw.js`、`css/exam.css` 逐文件取 `d794cb5` 内容，删除 `test/directory.test.ts`；核验方式 `git diff d794cb5 -- src public css test` 为空。
+- 保留：本文件与本地 `CHANGELOG.md` 里 v4.13.2 / v4.13.3 / v4.14.0 的记录不删，代码仍在历史提交 `cd3e7ca`、`e9f72e8`、`ca2c023` 中，需要时 `git checkout ca2c023 -- <文件>` 可逐个取回。
+- 已知代价（回退后会出现）：分页请求无超时无重试、科目页在整科下载完成前不写 innerHTML，所以政治/数学二在慢网络下会整页停在「加载中…」，没有骨架、没有失败原因、也没有「点这里重试」。
+- 计数视图 `v_chapter_counts` / `v_paper_counts` 已在数据库中建好（本次回退不动数据库），v4.13.1 的前端不查询它们。
+
+---
+
 ## v4.14.0（2026-10-06）目录改为后端计数：政治 953KB/7 次串行 → 9KB/3 次并行（精要版）
 
 > 版本说明：**取数架构调整**（只治目录，答题取数不动），`APP_VERSION` v4.13.3 → **v4.14.0**，`sw.js` 缓存名 `kaoyan-v4.14.0`。

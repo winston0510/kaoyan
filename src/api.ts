@@ -3,10 +3,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { APP_VERSION, SUBJECTS } from './constants';
 import { db, setDb, questionsCache, setQuestionsCache } from './state';
 import { getLocal, removeLocal, setLocal } from './storage';
-import { answerState, replaceAnswerState } from './progress';
+import { replaceAnswerState } from './progress';
 import { setCloudDays, setCloudSubjects } from './stats';
 import { toast } from './utils';
-import type { Question, QuestionType, QuizRecord, MergeRecordRow, MergeWrongRow, MergeFavoriteRow, WrongBookItem, FavoriteItem, DirectoryRow } from './types';
+import type { Question, QuizRecord, MergeRecordRow, MergeWrongRow, MergeFavoriteRow, WrongBookItem, FavoriteItem } from './types';
 
 export function initSupabase(): boolean {
   const url = localStorage.getItem('supabase_url');
@@ -41,12 +41,6 @@ export function saveConfig(): void {
 const PAGE_SIZE = 1000;
 const MAX_PAGES = 50;
 const ID_CHUNK = 200;
-const ROWS_RETRY = 1;
-const ROWS_TIMEOUT_MS = 25000;
-const DIR_RETRY = 2;
-const DIR_TIMEOUT_MS = 20000;
-const DIR_STALE_MS = 12 * 60 * 60 * 1000;
-const DIR_COLS = 'id,subject,chapter,type,source';
 
 const inflight = new Map<string, Promise<Question[]>>();
 
@@ -57,12 +51,8 @@ function filterBySubject(list: Question[], subject: string): Question[] {
 const SHARD_PREFIX = 'questions@';
 const DIR_KEY = 'questionsDir';
 
-function chapterFingerprint(): string {
-  return SUBJECTS.map(s => s.id + ':' + s.chapters.join(',')).join('#');
-}
-
 function dirFingerprint(): string {
-  return APP_VERSION + '#' + chapterFingerprint();
+  return APP_VERSION + '#' + SUBJECTS.map(s => s.id + ':' + s.chapters.join(',')).join('#');
 }
 
 function readShard(subject: string): Question[] {
@@ -99,350 +89,34 @@ export function localId(offset = 0): number {
   return Date.now() + offset;
 }
 
-function withTimeout<T>(task: PromiseLike<T>, ms: number): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('请求超时')), ms);
-    Promise.resolve(task).then(
-      v => { clearTimeout(timer); resolve(v); },
-      e => { clearTimeout(timer); reject(e); }
-    );
-  });
-}
-
-type PagedQuery = PromiseLike<{ data: unknown; error: { message: string } | null }>;
-
-async function runQuery<T>(task: () => PagedQuery, timeoutMs: number, retries: number): Promise<T[]> {
-  let lastError: unknown = new Error('题库分页失败');
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const { data, error } = await withTimeout(task(), timeoutMs);
-      if (error) throw new Error(error.message);
-      return (data || []) as T[];
-    } catch (e) {
-      lastError = e;
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error('题库分页失败');
-}
-
-function fetchQuestionPage<T>(client: SupabaseClient, subject: string, from: number, cols: string, timeoutMs: number, retries: number): Promise<T[]> {
-  return runQuery<T>(() => client
+async function fetchSubjectPage(client: SupabaseClient, subject: string, from: number): Promise<Question[]> {
+  const { data, error } = await client
     .from('questions')
-    .select(cols)
-    .eq('subject', subject)
-    .order('id', { ascending: true })
-    .range(from, from + PAGE_SIZE - 1) as unknown as PagedQuery, timeoutMs, retries);
-}
-
-function fetchViewPage<T>(client: SupabaseClient, view: string, subject: string, order: string): Promise<T[]> {
-  return runQuery<T>(() => client
-    .from(view)
     .select('*')
     .eq('subject', subject)
-    .order(order, { ascending: true })
-    .range(0, PAGE_SIZE - 1) as unknown as PagedQuery, DIR_TIMEOUT_MS, DIR_RETRY);
-}
-
-async function fetchSubjectPage(client: SupabaseClient, subject: string, from: number): Promise<Question[]> {
-  return fetchQuestionPage<Question>(client, subject, from, '*', ROWS_TIMEOUT_MS, ROWS_RETRY);
+    .order('id', { ascending: true })
+    .range(from, from + PAGE_SIZE - 1);
+  if (error) throw error;
+  return (data || []) as Question[];
 }
 
 function commitSubject(subject: string, rows: Question[]): void {
   const merged = [...cachedQuestions().filter(q => q.subject !== subject), ...rows];
   if (writeShard(subject, rows)) setLocal(DIR_KEY, dirFingerprint());
-  writeDirIndex(subject, { fp: chapterFingerprint(), at: Date.now(), complete: true, rows: toDirRows(rows) });
   setQuestionsCache(merged);
 }
 
 export function saveMirrorRows(rows: Question[]): void {
   const fp = dirFingerprint();
-  const now = Date.now();
   setQuestionsCache(rows);
   mirrorLoaded = true;
   for (const s of SUBJECTS) {
     const part = rows.filter(q => q.subject === s.id);
-    if (part.length === 0) continue;
-    if (writeShard(s.id, part)) setLocal(DIR_KEY, fp);
-    writeDirIndex(s.id, { fp: chapterFingerprint(), at: now, complete: true, rows: toDirRows(part) });
+    if (part.length > 0 && writeShard(s.id, part)) setLocal(DIR_KEY, fp);
   }
 }
 
 export { cachedQuestions };
-
-const DIR_PREFIX = 'questionsIdx@';
-
-export interface DirIndex {
-  fp: string;
-  at: number;
-  complete: boolean;
-  rows: DirectoryRow[];
-  error?: string;
-}
-
-function emptyDirIndex(error: string): DirIndex {
-  return { fp: chapterFingerprint(), at: 0, complete: false, rows: [], error };
-}
-
-function readDirIndex(subject: string): DirIndex | null {
-  const raw = getLocal<DirIndex | null>(DIR_PREFIX + subject, null);
-  if (!raw || raw.fp !== chapterFingerprint() || !Array.isArray(raw.rows)) return null;
-  return raw;
-}
-
-function writeDirIndex(subject: string, idx: DirIndex): void {
-  if (!setLocal(DIR_PREFIX + subject, idx)) removeLocal(DIR_PREFIX + subject);
-}
-
-function toDirRows(rows: Question[]): DirectoryRow[] {
-  return rows.map(q => ({ id: q.id, subject: q.subject, chapter: q.chapter, type: q.type, source: q.source }));
-}
-
-async function fetchDirectory(subject: string, onProgress?: (idx: DirIndex) => void): Promise<DirIndex> {
-  const client = db;
-  if (!client) return readDirIndex(subject) || emptyDirIndex('未连接 Supabase');
-  const rows: DirectoryRow[] = [];
-  let error = '';
-  for (let page = 0; page < MAX_PAGES; page++) {
-    let chunk: DirectoryRow[];
-    try {
-      chunk = await fetchQuestionPage<DirectoryRow>(client, subject, page * PAGE_SIZE, DIR_COLS, DIR_TIMEOUT_MS, DIR_RETRY);
-    } catch (e) {
-      error = e instanceof Error ? e.message : '目录请求失败';
-      break;
-    }
-    for (const r of chunk) rows.push(r);
-    const partial: DirIndex = {
-      fp: chapterFingerprint(),
-      at: Date.now(),
-      complete: chunk.length < PAGE_SIZE,
-      rows: rows.slice()
-    };
-    writeDirIndex(subject, partial);
-    if (partial.complete) {
-      if (onProgress) onProgress(partial);
-      return partial;
-    }
-    if (onProgress) onProgress(partial);
-  }
-  const idx: DirIndex = { fp: chapterFingerprint(), at: Date.now(), complete: false, rows, error: error || '目录未拉全' };
-  if (rows.length === 0) {
-    const cached = readDirIndex(subject);
-    return cached ? { ...cached, error: idx.error } : idx;
-  }
-  writeDirIndex(subject, idx);
-  return idx;
-}
-
-const dirInflight = new Map<string, Promise<DirIndex>>();
-const dirRefreshed = new Set<string>();
-
-function runDirectoryFetch(subject: string, onProgress?: (idx: DirIndex) => void): Promise<DirIndex> {
-  const running = dirInflight.get(subject);
-  if (running) {
-    if (onProgress) running.then(idx => onProgress(idx)).catch(() => undefined);
-    return running;
-  }
-  const p = fetchDirectory(subject, onProgress).finally(() => {
-    if (dirInflight.get(subject) === p) dirInflight.delete(subject);
-  });
-  dirInflight.set(subject, p);
-  return p;
-}
-
-export function hasCloud(): boolean {
-  return db !== null;
-}
-
-export function loadDirectory(subject: string, onProgress?: (idx: DirIndex) => void): Promise<DirIndex> {
-  const cached = readDirIndex(subject);
-  if (cached) {
-    const stale = Date.now() - (cached.at || 0) > DIR_STALE_MS;
-    if ((!cached.complete || stale) && db && !dirRefreshed.has(subject)) {
-      dirRefreshed.add(subject);
-      void runDirectoryFetch(subject, onProgress);
-    }
-    return Promise.resolve(cached);
-  }
-  const inMem = filterBySubject(cachedQuestions(), subject);
-  if (inMem.length > 0) return Promise.resolve({ fp: chapterFingerprint(), at: Date.now(), complete: true, rows: toDirRows(inMem) });
-  return runDirectoryFetch(subject, onProgress);
-}
-
-export function refreshDirectory(subject: string, onProgress?: (idx: DirIndex) => void): Promise<DirIndex> {
-  if (!db) return Promise.resolve(readDirIndex(subject) || emptyDirIndex('未连接 Supabase'));
-  dirRefreshed.add(subject);
-  return runDirectoryFetch(subject, onProgress);
-}
-
-const warmed = new Set<string>();
-
-export function warmSubjectQuestions(subject: string): void {
-  if (!db || warmed.has(subject) || inflight.has(subject)) return;
-  if (filterBySubject(cachedQuestions(), subject).length > 0) return;
-  warmed.add(subject);
-  void loadQuestions(subject).catch(() => undefined);
-}
-
-const CHAPTER_VIEW = 'v_chapter_counts';
-const PAPER_VIEW = 'v_paper_counts';
-const VIEW_STALE_MS = 6 * 60 * 60 * 1000;
-const PRACTICE_KEY = 'practicedRows';
-
-export interface ChapterCount {
-  chapter: string;
-  total: number;
-}
-
-export interface SourceCount {
-  subject: string;
-  source: string;
-  type: QuestionType;
-  total: number;
-}
-
-export interface PracticedRow {
-  id?: number | string;
-  subject: string;
-  chapter: string;
-  source?: string;
-}
-
-export interface DirView {
-  at: number;
-  complete: boolean;
-  fromViews: boolean;
-  chapters: ChapterCount[];
-  sources: SourceCount[];
-  practiced: PracticedRow[];
-  error?: string;
-}
-
-async function fetchViewRows<T>(client: SupabaseClient, view: string, subject: string, order: string): Promise<T[]> {
-  const chunk = await fetchViewPage<T>(client, view, subject, order);
-  if (chunk.length >= PAGE_SIZE) throw new Error('计数视图超出单页上限');
-  return chunk;
-}
-
-function cachedPracticedRows(): PracticedRow[] | null {
-  const ids = Object.keys(answerState());
-  if (ids.length === 0) return [];
-  const cached = getLocal<{ at: number; ids: number; rows: PracticedRow[] } | null>(PRACTICE_KEY, null);
-  if (!cached || cached.ids !== ids.length || !Array.isArray(cached.rows)) return null;
-  return Date.now() - cached.at > VIEW_STALE_MS ? null : cached.rows;
-}
-
-async function fetchPracticedRows(client: SupabaseClient): Promise<PracticedRow[]> {
-  const hit = cachedPracticedRows();
-  if (hit) return hit;
-  const ids = Object.keys(answerState());
-  if (ids.length === 0) return [];
-  const rows: PracticedRow[] = [];
-  for (let i = 0; i < ids.length; i += ID_CHUNK) {
-    const part = ids.slice(i, i + ID_CHUNK).map(Number).filter(n => !Number.isNaN(n));
-    if (part.length === 0) continue;
-    try {
-      const chunk = await runQuery<PracticedRow>(() => client
-        .from('questions')
-        .select('id,subject,chapter,source')
-        .in('id', part) as unknown as PagedQuery, DIR_TIMEOUT_MS, DIR_RETRY);
-      for (const r of chunk) rows.push(r);
-    } catch {
-      break;
-    }
-  }
-  setLocal(PRACTICE_KEY, { at: Date.now(), ids: ids.length, rows });
-  return rows;
-}
-
-function emptyView(at: number, error: string): DirView {
-  return { at, complete: false, fromViews: false, chapters: [], sources: [], practiced: [], error };
-}
-
-function viewFromRows(rows: DirectoryRow[]): DirView {
-  const state = answerState();
-  const chapters = new Map<string, number>();
-  const sources = new Map<string, number>();
-  const practiced: PracticedRow[] = [];
-  for (const r of rows) {
-    chapters.set(r.chapter, (chapters.get(r.chapter) || 0) + 1);
-    const key = r.subject + '|' + (r.source || '') + '|' + r.type;
-    sources.set(key, (sources.get(key) || 0) + 1);
-    if (r.id !== undefined && state[String(r.id)] !== undefined) {
-      practiced.push({ id: r.id, subject: r.subject, chapter: r.chapter, source: r.source });
-    }
-  }
-  return {
-    at: Date.now(),
-    complete: true,
-    fromViews: false,
-    chapters: [...chapters].map(([chapter, total]) => ({ chapter, total })),
-    sources: [...sources].map(([key, total]) => {
-      const [subject, source, type] = key.split('|');
-      return { subject, source, type: type as QuestionType, total };
-    }),
-    practiced
-  };
-}
-
-const viewInflight = new Map<string, Promise<DirView>>();
-const COUNTS_PREFIX = 'questionsCounts@';
-
-function readViewCache(subject: string): DirView | null {
-  const raw = getLocal<DirView | null>(COUNTS_PREFIX + subject, null);
-  if (!raw || !Array.isArray(raw.chapters) || !Array.isArray(raw.sources)) return null;
-  return raw;
-}
-
-async function fetchDirView(subject: string): Promise<DirView> {
-  const client = db;
-  if (!client) {
-    const idx = await loadDirectory(subject);
-    return idx.rows.length > 0 ? viewFromRows(idx.rows) : emptyView(0, idx.error || '未连接 Supabase');
-  }
-  let viewError = '';
-  try {
-    const [chapters, sources, practiced] = await Promise.all([
-      fetchViewRows<ChapterCount>(client, CHAPTER_VIEW, subject, 'chapter'),
-      fetchViewRows<SourceCount>(client, PAPER_VIEW, subject, 'source'),
-      fetchPracticedRows(client)
-    ]);
-    return { at: Date.now(), complete: true, fromViews: true, chapters, sources, practiced };
-  } catch (e) {
-    viewError = e instanceof Error ? e.message : '计数视图不可用';
-  }
-  const idx = await loadDirectory(subject);
-  if (idx.rows.length > 0) return viewFromRows(idx.rows);
-  return emptyView(0, viewError || '计数与目录均不可用');
-}
-
-function runViewFetch(subject: string, onUpdate?: (v: DirView) => void): Promise<DirView> {
-  const running = viewInflight.get(subject);
-  if (running) {
-    if (onUpdate) running.then(v => onUpdate(v)).catch(() => undefined);
-    return running;
-  }
-  const p = fetchDirView(subject).then(v => {
-    if (v.complete) setLocal(COUNTS_PREFIX + subject, v);
-    return v;
-  }).finally(() => {
-    if (viewInflight.get(subject) === p) viewInflight.delete(subject);
-  });
-  viewInflight.set(subject, p);
-  return p;
-}
-
-export function loadDirView(subject: string, onUpdate?: (v: DirView) => void): Promise<DirView> {
-  const cached = readViewCache(subject);
-  if (cached) {
-    if (Date.now() - cached.at > VIEW_STALE_MS) void runViewFetch(subject, onUpdate);
-    return Promise.resolve(cached);
-  }
-  return runViewFetch(subject);
-}
-
-export function refreshDirView(subject: string, onUpdate?: (v: DirView) => void): Promise<DirView> {
-  return runViewFetch(subject, onUpdate);
-}
 
 async function fetchFromNetwork(subject: string): Promise<Question[]> {
   const client = db;

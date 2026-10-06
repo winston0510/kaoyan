@@ -1,4 +1,4 @@
-import type { DirectoryRow, Question, QuestionType } from './types';
+import type { Question } from './types';
 
 export interface PaperInfo {
   source: string;
@@ -40,28 +40,8 @@ export function isPaperSource(source?: string): boolean {
   return REAL.test(s) || STYLE.test(s);
 }
 
-export function paperFromCounts(subject: string, source: string, totals: Array<{ type: QuestionType; total: number }>): PaperInfo {
-  const year = sourceYear(source);
-  const types: Record<string, number> = {};
-  let total = 0;
-  for (const t of totals) {
-    types[t.type] = (types[t.type] || 0) + t.total;
-    total += t.total;
-  }
-  const expected = expectedCount(subject, year);
-  return {
-    source,
-    year,
-    style: STYLE.test(source),
-    total,
-    expected,
-    complete: expected > 0 && total >= expected,
-    types
-  };
-}
-
-export function listPapers(questions: DirectoryRow[]): PaperInfo[] {
-  const groups = new Map<string, DirectoryRow[]>();
+export function listPapers(questions: Question[]): PaperInfo[] {
+  const groups = new Map<string, Question[]>();
   for (const q of questions) {
     const s = (q.source || '').trim();
     if (!isPaperSource(s)) continue;
@@ -71,9 +51,19 @@ export function listPapers(questions: DirectoryRow[]): PaperInfo[] {
   }
   const out: PaperInfo[] = [];
   groups.forEach((arr, source) => {
-    const tally = new Map<QuestionType, number>();
-    for (const q of arr) tally.set(q.type, (tally.get(q.type) || 0) + 1);
-    out.push(paperFromCounts(arr[0].subject, source, [...tally].map(([type, total]) => ({ type, total }))));
+    const year = sourceYear(source);
+    const types: Record<string, number> = {};
+    for (const q of arr) types[q.type] = (types[q.type] || 0) + 1;
+    const expected = expectedCount(arr[0].subject, year);
+    out.push({
+      source,
+      year,
+      style: STYLE.test(source),
+      total: arr.length,
+      expected,
+      complete: expected > 0 && arr.length >= expected,
+      types
+    });
   });
   return out.sort((a, b) => b.year - a.year || Number(a.style) - Number(b.style));
 }

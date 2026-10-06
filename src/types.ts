@@ -33,14 +33,6 @@ export interface Question {
   wrongTime?: number;
 }
 
-export interface DirectoryRow {
-  id?: number | string;
-  subject: string;
-  chapter: string;
-  type: QuestionType;
-  source?: string;
-}
-
 export interface QuizRecord {
   question_id: number | string | null;
   subject: string;

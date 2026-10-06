@@ -3,7 +3,7 @@ import { quizState, setQuizState } from '../state';
 import { getLocal, setLocal, todayKey } from '../storage';
 import { answerState, markAnswer } from '../progress';
 import { shuffle, formatMath, toast, esc } from '../utils';
-import { loadQuestions, syncFavoriteToDB, syncRecordToDB, syncWrongBookToDB } from '../api';
+import { loadQuestions, loadScopedQuestions, syncFavoriteToDB, syncRecordToDB, syncWrongBookToDB } from '../api';
 import { judgeAnswer, formatCorrectAnswer, isManualType, answerLetters } from '../judge';
 import { paperQuestions, paperMinutes } from '../papers';
 import { answerPoints, isRecitable } from '../recite';
@@ -55,12 +55,13 @@ export async function startQuiz(btn: HTMLButtonElement): Promise<void> {
     let questions: Question[] = [];
     let allAnswered = false;
     if (paperSource !== '') {
-      questions = paperQuestions(await loadQuestions(subjectId), paperSource);
+      questions = paperQuestions(await loadScopedQuestions(subjectId, { source: paperSource }), paperSource);
     } else if (mode === 'wrong') {
       questions = getLocal<WrongBookItem[]>('wrongBook', []).filter(q => q.subject === subjectId && !q.mastered && inScope(q.chapter));
     } else {
-      questions = await loadQuestions(subjectId);
-      questions = questions.filter(q => inScope(q.chapter));
+      questions = scopeChapters !== null
+        ? await loadScopedQuestions(subjectId, { chapters: scopeChapters })
+        : await loadQuestions(subjectId);
       const state = answerState();
       if (mode === 'fresh') {
         const unmasteredIds = new Set(getLocal<WrongBookItem[]>('wrongBook', []).filter(w => !w.mastered).map(w => String(w.id)));

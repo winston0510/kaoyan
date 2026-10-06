@@ -4,6 +4,7 @@
 .pc-meta{font-size:.75rem;color:var(--text-secondary);margin-top:2px}
 .pc-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
 .paper-note{font-size:.75rem;color:var(--text-light);margin:0 16px 8px}
+.dir-retry{color:var(--primary);text-decoration:underline;cursor:pointer}
 .paper-full,.paper-part,.paper-done{font-size:.6875rem;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap}
 .paper-full{background:var(--primary-light);color:var(--primary-dark)}
 .paper-part{background:var(--warning-light);color:#9A5B00}

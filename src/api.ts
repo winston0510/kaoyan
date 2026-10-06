@@ -41,9 +41,11 @@ export function saveConfig(): void {
 const PAGE_SIZE = 1000;
 const MAX_PAGES = 50;
 const ID_CHUNK = 200;
-const PAGE_RETRY = 1;
+const ROWS_RETRY = 1;
 const ROWS_TIMEOUT_MS = 25000;
-const DIR_TIMEOUT_MS = 6000;
+const DIR_RETRY = 2;
+const DIR_TIMEOUT_MS = 20000;
+const DIR_STALE_MS = 12 * 60 * 60 * 1000;
 const DIR_COLS = 'id,subject,chapter,type,source';
 
 const inflight = new Map<string, Promise<Question[]>>();
@@ -55,8 +57,12 @@ function filterBySubject(list: Question[], subject: string): Question[] {
 const SHARD_PREFIX = 'questions@';
 const DIR_KEY = 'questionsDir';
 
+function chapterFingerprint(): string {
+  return SUBJECTS.map(s => s.id + ':' + s.chapters.join(',')).join('#');
+}
+
 function dirFingerprint(): string {
-  return APP_VERSION + '#' + SUBJECTS.map(s => s.id + ':' + s.chapters.join(',')).join('#');
+  return APP_VERSION + '#' + chapterFingerprint();
 }
 
 function readShard(subject: string): Question[] {
@@ -75,10 +81,7 @@ function loadMirror(): Question[] {
   if (mirrorLoaded) return questionsCache;
   mirrorLoaded = true;
   if (getLocal<string>(DIR_KEY, '') !== dirFingerprint()) {
-    SUBJECTS.forEach(s => {
-      removeLocal(SHARD_PREFIX + s.id);
-      removeLocal(DIR_PREFIX + s.id);
-    });
+    SUBJECTS.forEach(s => removeLocal(SHARD_PREFIX + s.id));
     removeLocal(DIR_KEY);
     removeLocal('questions');
     return questionsCache;
@@ -106,9 +109,9 @@ function withTimeout<T>(task: PromiseLike<T>, ms: number): Promise<T> {
   });
 }
 
-async function fetchPage<T>(client: SupabaseClient, cols: string, subject: string, from: number, timeoutMs: number): Promise<T[]> {
+async function fetchPage<T>(client: SupabaseClient, cols: string, subject: string, from: number, timeoutMs: number, retries: number): Promise<T[]> {
   let lastError = new Error('题库分页失败');
-  for (let attempt = 0; attempt <= PAGE_RETRY; attempt++) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const { data, error } = await withTimeout(
         client
@@ -129,24 +132,26 @@ async function fetchPage<T>(client: SupabaseClient, cols: string, subject: strin
 }
 
 async function fetchSubjectPage(client: SupabaseClient, subject: string, from: number): Promise<Question[]> {
-  return fetchPage<Question>(client, '*', subject, from, ROWS_TIMEOUT_MS);
+  return fetchPage<Question>(client, '*', subject, from, ROWS_TIMEOUT_MS, ROWS_RETRY);
 }
 
 function commitSubject(subject: string, rows: Question[]): void {
   const merged = [...cachedQuestions().filter(q => q.subject !== subject), ...rows];
   if (writeShard(subject, rows)) setLocal(DIR_KEY, dirFingerprint());
+  writeDirIndex(subject, { fp: chapterFingerprint(), at: Date.now(), complete: true, rows: toDirRows(rows) });
   setQuestionsCache(merged);
 }
 
 export function saveMirrorRows(rows: Question[]): void {
   const fp = dirFingerprint();
+  const now = Date.now();
   setQuestionsCache(rows);
   mirrorLoaded = true;
   for (const s of SUBJECTS) {
     const part = rows.filter(q => q.subject === s.id);
     if (part.length === 0) continue;
     if (writeShard(s.id, part)) setLocal(DIR_KEY, fp);
-    writeDirIndex(s.id, { fp, complete: true, rows: toDirRows(part) });
+    writeDirIndex(s.id, { fp: chapterFingerprint(), at: now, complete: true, rows: toDirRows(part) });
   }
 }
 
@@ -154,19 +159,21 @@ export { cachedQuestions };
 
 const DIR_PREFIX = 'questionsIdx@';
 
-interface DirIndex {
+export interface DirIndex {
   fp: string;
+  at: number;
   complete: boolean;
   rows: DirectoryRow[];
+  error?: string;
 }
 
-function emptyDirIndex(): DirIndex {
-  return { fp: dirFingerprint(), complete: false, rows: [] };
+function emptyDirIndex(error: string): DirIndex {
+  return { fp: chapterFingerprint(), at: 0, complete: false, rows: [], error };
 }
 
 function readDirIndex(subject: string): DirIndex | null {
   const raw = getLocal<DirIndex | null>(DIR_PREFIX + subject, null);
-  if (!raw || raw.fp !== dirFingerprint() || !Array.isArray(raw.rows)) return null;
+  if (!raw || raw.fp !== chapterFingerprint() || !Array.isArray(raw.rows)) return null;
   return raw;
 }
 
@@ -178,36 +185,52 @@ function toDirRows(rows: Question[]): DirectoryRow[] {
   return rows.map(q => ({ id: q.id, subject: q.subject, chapter: q.chapter, type: q.type, source: q.source }));
 }
 
-async function fetchDirectory(subject: string, fallback: DirIndex | null): Promise<DirIndex> {
+async function fetchDirectory(subject: string, onProgress?: (idx: DirIndex) => void): Promise<DirIndex> {
   const client = db;
-  if (!client) return fallback || emptyDirIndex();
+  if (!client) return readDirIndex(subject) || emptyDirIndex('未连接 Supabase');
   const rows: DirectoryRow[] = [];
-  let complete = false;
+  let error = '';
   for (let page = 0; page < MAX_PAGES; page++) {
+    let chunk: DirectoryRow[];
     try {
-      const chunk = await fetchPage<DirectoryRow>(client, DIR_COLS, subject, page * PAGE_SIZE, DIR_TIMEOUT_MS);
-      for (const r of chunk) rows.push(r);
-      if (chunk.length < PAGE_SIZE) {
-        complete = true;
-        break;
-      }
-    } catch {
+      chunk = await fetchPage<DirectoryRow>(client, DIR_COLS, subject, page * PAGE_SIZE, DIR_TIMEOUT_MS, DIR_RETRY);
+    } catch (e) {
+      error = e instanceof Error ? e.message : '目录请求失败';
       break;
     }
+    for (const r of chunk) rows.push(r);
+    const partial: DirIndex = {
+      fp: chapterFingerprint(),
+      at: Date.now(),
+      complete: chunk.length < PAGE_SIZE,
+      rows: rows.slice()
+    };
+    writeDirIndex(subject, partial);
+    if (partial.complete) {
+      if (onProgress) onProgress(partial);
+      return partial;
+    }
+    if (onProgress) onProgress(partial);
   }
-  if (rows.length === 0) return fallback || emptyDirIndex();
-  const idx: DirIndex = { fp: dirFingerprint(), complete, rows };
+  const idx: DirIndex = { fp: chapterFingerprint(), at: Date.now(), complete: false, rows, error: error || '目录未拉全' };
+  if (rows.length === 0) {
+    const cached = readDirIndex(subject);
+    return cached ? { ...cached, error: idx.error } : idx;
+  }
   writeDirIndex(subject, idx);
   return idx;
 }
 
 const dirInflight = new Map<string, Promise<DirIndex>>();
-const dirRetried = new Set<string>();
+const dirRefreshed = new Set<string>();
 
-function runDirectoryFetch(subject: string, fallback: DirIndex | null): Promise<DirIndex> {
+function runDirectoryFetch(subject: string, onProgress?: (idx: DirIndex) => void): Promise<DirIndex> {
   const running = dirInflight.get(subject);
-  if (running) return running;
-  const p = fetchDirectory(subject, fallback).finally(() => {
+  if (running) {
+    if (onProgress) running.then(idx => onProgress(idx)).catch(() => undefined);
+    return running;
+  }
+  const p = fetchDirectory(subject, onProgress).finally(() => {
     if (dirInflight.get(subject) === p) dirInflight.delete(subject);
   });
   dirInflight.set(subject, p);
@@ -218,24 +241,25 @@ export function hasCloud(): boolean {
   return db !== null;
 }
 
-export function loadDirectory(subject: string): Promise<DirIndex> {
+export function loadDirectory(subject: string, onProgress?: (idx: DirIndex) => void): Promise<DirIndex> {
   const cached = readDirIndex(subject);
   if (cached) {
-    if (!cached.complete && db && !dirRetried.has(subject)) {
-      dirRetried.add(subject);
-      void runDirectoryFetch(subject, cached);
+    const stale = Date.now() - (cached.at || 0) > DIR_STALE_MS;
+    if ((!cached.complete || stale) && db && !dirRefreshed.has(subject)) {
+      dirRefreshed.add(subject);
+      void runDirectoryFetch(subject, onProgress);
     }
     return Promise.resolve(cached);
   }
   const inMem = filterBySubject(cachedQuestions(), subject);
-  if (inMem.length > 0) return Promise.resolve({ fp: dirFingerprint(), complete: true, rows: toDirRows(inMem) });
-  return runDirectoryFetch(subject, null);
+  if (inMem.length > 0) return Promise.resolve({ fp: chapterFingerprint(), at: Date.now(), complete: true, rows: toDirRows(inMem) });
+  return runDirectoryFetch(subject, onProgress);
 }
 
-export function refreshDirectory(subject: string): Promise<DirIndex> {
-  if (!db) return Promise.resolve(readDirIndex(subject) || emptyDirIndex());
-  dirRetried.add(subject);
-  return runDirectoryFetch(subject, readDirIndex(subject));
+export function refreshDirectory(subject: string, onProgress?: (idx: DirIndex) => void): Promise<DirIndex> {
+  if (!db) return Promise.resolve(readDirIndex(subject) || emptyDirIndex('未连接 Supabase'));
+  dirRefreshed.add(subject);
+  return runDirectoryFetch(subject, onProgress);
 }
 
 const warmed = new Set<string>();

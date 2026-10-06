@@ -1,4 +1,4 @@
-const CACHE = 'kaoyan-v4.13.2';
+const CACHE = 'kaoyan-v4.13.3';
 const PRECACHE = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon.svg'];
 
 self.addEventListener('install', (event) => {

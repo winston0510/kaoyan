@@ -6,6 +6,18 @@
 
 ---
 
+## v4.17.0（2026-10-07）结果页「继续刷题」按模式续组 + 目录「已练」实时跟上新答的题（精要版）
+
+> 版本说明：两个 Bug 修复，`APP_VERSION` v4.16.0 → **v4.17.0**，`sw.js` 缓存名 `kaoyan-v4.17.0`。纯前端，不涉及题库数据与云端结构。
+
+- **结果页续刷**：以前「继续刷题」只回首页，下一批要重新选科目/章节/模式/题量/来源。新增 `src/quizChain.ts`（`QuizSession` 六元组 + `batchOffset` / `nextCursor` / `sessionHint` / `emptyMessage`），`src/ui/quiz.ts` 把 `startQuiz` 的取数段拆成 `assembleBatch(sess, paperSource, offset)` 与 `beginQuiz(...)`，用模块级 `lastSession` / `seqCursor` 记住本次会话，结果页按钮改调 `continueFromResult()` 并按口径直接组下一组（按钮下 `.result-continue-hint` 写明「科目 · 范围 · 模式 · 题量 · 来源」）。**只有 `sequential` 带游标**，其余模式偏移归 0；套卷不入会话（`lastSession = null`），错题重做续刷到空只提示不跳转。顺带修掉老问题：`startQuiz` 曾把弹窗按钮文案改成「开始刷题」后不恢复，套卷的「开始整套」会被永久改写，现在 `finally` 恢复原文案；组不出题时按优先级给原因并**保留弹窗**。
+- **目录「已练」不更新**：根因是 `loadDirView` 命中 `questionsCounts@<subject>` 缓存时原样返回整份 `DirView`，而缓存把用户进度 `practiced` 一起存了 6 小时（`VIEW_STALE_MS`）；视图路径的进度只在拉取那一刻算一次，之后答题只写 `kaoyan_answerState`，没人重算——反倒是降级路径（`viewFromRows` / `practicedFromIndex`）每次按实时状态重算，所以断网时看不到这个毛病。改法：`withLivePracticed(view, subject)` 先用实时 `answerState()` 过滤已重置的记录，再用 `localPracticedRows()`（整科索引 `questionsIdx@` / 内存镜像 / 按章按卷的 `scopedCache`）补上新答的题——刚答的题必然在 `scopedCache` 里，所以本地立即对上数、不等网络；写缓存时记 `answeredIds` 对账戳，只有「本地覆盖不全且对账戳与当前已答数不一致」才后台 `runViewFetch` 核对云端并拉到即重绘（跨设备进度靠这条补齐）。
+- **实测**（12,925 行真实题库 + mock PostgREST + Edge 无头逐题作答，N=5）：续刷三种顺序模式（顺序 / 顺序只刷未掌握 / 继续刷题）批次 2 严格等于题池第 6–10 题、两批**重复题 0**；随机模式重复 1 题（语义允许）；错题重做首轮答错 1 题→组出 1 题→再点继续得「错题本里没有未掌握的题目」且结果页仍在、按钮恢复可用；套卷结果页无续刷说明、按钮仍是 `switchPage('home')`；全程 0 页面错误 0 控制台错误。已练：政治「第1章」刷对 5 题后章卡 `0/578` → **`5/578`**、整科 `已练 0` → **`已练 5`**，刷新重进目录数字一致且**零云端请求**；清空缓存注入 7 条已答 id 的纯云端路径，整科 `已练 7`、马原「第2章」章卡 `4/384`（另 3 条属同一科目里另一板块的「第2章 新民主主义革命理论」，章卡按章名分账自洽）。
+- **质量门**：`tsc --noEmit` 0 错；`vitest` 13 文件 **143 例全绿**（新增 `test/quiz-continue.test.ts` 15 例含结果页按钮与 `windowApi` 接线的 `?raw` 断言；`test/directory.test.ts` 新增 4 例已练回归；`test/provenance.test.ts` 跟随重构更新调用点断言）；`vite build` 通过；`scripts/smoke_test.cjs` 退出 0（首页 `当前版本 v4.17.0`、64 张章节卡、`JS_ERRORS: none`）。
+- **维护约束**：今后凡「按用户进度实时算」的计数不要塞进 `questionsCounts@` 视图缓存——缓存只放题库计数，进度一律经 `withLivePracticed` 实时算，否则会复现这次的 6 小时不更新。完整记录见本地 `CHANGELOG.md` v4.17.0 节。
+
+---
+
 ## v4.16.0（2026-10-07）删掉 98 道无解的题 + 题目标上来源可信度（精要版）
 
 > 版本说明：新增「来源分档与来源范围筛选」属新增功能，`APP_VERSION` v4.15.1 → **v4.16.0**，`sw.js` 缓存名 `kaoyan-v4.16.0`；题库侧删掉 98 行并重生成快照。

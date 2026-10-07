@@ -173,6 +173,50 @@ describe('发布快照计数', () => {
   });
 });
 
+describe('答完题后的已练数', () => {
+  it('本地有整科行时，已练按实时进度重算，不再请求云端', async () => {
+    saveMirrorRows([Q1, Q2, Q_MTH]);
+    setDb(viewDb().client);
+    markAnswer(11, true);
+    await refreshDirView('politics');
+    markAnswer(12, false);
+    const later = viewDb();
+    setDb(later.client);
+    const view = await loadDirView('politics');
+    expect(view.practiced.map(p => p.id)).toEqual([11, 12]);
+    expect(later.calls).toEqual([]);
+  });
+
+  it('刚答的题只要本地有这一行就立刻计入，不等云端进度回包', async () => {
+    setDb(indexDb('politics', 2).client);
+    markAnswer(1, true);
+    await refreshDirView('politics');
+    markAnswer(2, false);
+    const view = await loadDirView('politics');
+    expect(view.practiced.map(p => p.id)).toEqual([1, 2]);
+  });
+
+  it('刷掉答题记录后，缓存里的已练同步归零', async () => {
+    saveMirrorRows([Q1, Q2, Q_MTH]);
+    setDb(viewDb().client);
+    markAnswer(11, true);
+    await refreshDirView('politics');
+    setLocal('answerState', {});
+    const view = await loadDirView('politics');
+    expect(view.practiced).toEqual([]);
+  });
+
+  it('按章取题时只缓存了部分行，也能把新答的题计进已练', async () => {
+    setDb(indexDb('politics', 2).client);
+    const rows = await loadScopedQuestions('politics', { chapters: ['第1章 世界的物质性及发展规律'] });
+    markAnswer(rows[0].id, true);
+    setDb(viewDb().client);
+    await refreshDirView('politics');
+    const view = await loadDirView('politics');
+    expect(view.practiced.some(p => p.id === 1)).toBe(true);
+  });
+});
+
 describe('按章与按卷取题', () => {
   it('按章只发一条 chapter 过滤请求，不拉整科', async () => {
     const { client, calls } = indexDb('politics', 3);

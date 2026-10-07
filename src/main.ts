@@ -6,7 +6,7 @@ import { APP_VERSION } from './constants';
 import { renderHome, selectMode, openPlanModal, savePlanForm } from './ui/home';
 import { openQuizModal, openSubject, renderSubject, openPaperModal, selectMinutes } from './ui/subject';
 import { switchPage } from './ui/navigation';
-import { confirmQuit, finishQuiz, nextQuestion, quitQuiz, renderQuestion, resumeQuiz, retryWrong, revealPoint, countPoints, selectOption, selfAssess, startQuiz, submitAnswer, toggleFavorite, toggleMultiOption } from './ui/quiz';
+import { confirmQuit, continueFromResult, finishQuiz, nextQuestion, quitQuiz, renderQuestion, resumeQuiz, retryWrong, revealPoint, countPoints, selectOption, selfAssess, startQuiz, submitAnswer, toggleFavorite, toggleMultiOption } from './ui/quiz';
 import { renderFavorites, removeFavorite, setFavFilter, startFavQuiz } from './ui/favorites';
 import { renderWrongBook, setWrongFilter } from './ui/wrongbook';
 import { renderStats } from './ui/stats';
@@ -28,6 +28,7 @@ const windowApi: Record<string, unknown> = {
   openPlanModal,
   savePlanForm,
   startQuiz,
+  continueFromResult,
   renderQuestion,
   selectOption,
   toggleMultiOption,

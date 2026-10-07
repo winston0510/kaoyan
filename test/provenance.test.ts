@@ -10,11 +10,12 @@ describe('弹窗筛选的接线', () => {
   });
 
   it('筛选只作用于新题模式，不动错题重做与套卷', () => {
-    const at = quizSrc.indexOf('matchTier(q.source, tierFilter)');
+    const at = quizSrc.indexOf('matchTier(q.source, sess.tier)');
     expect(at).toBeGreaterThan(-1);
     const guard = quizSrc.slice(at - 260, at);
     expect(guard).toContain("paperSource === ''");
-    expect(guard).toContain("mode !== 'wrong'");
+    expect(guard).toContain("sess.mode !== 'wrong'");
+    expect(guard).toContain("sess.tier !== ''");
   });
 });
 

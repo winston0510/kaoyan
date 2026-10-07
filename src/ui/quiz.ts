@@ -6,7 +6,8 @@ import { shuffle, formatMath, toast, esc } from '../utils';
 import { loadQuestions, loadScopedQuestions, syncFavoriteToDB, syncRecordToDB, syncWrongBookToDB } from '../api';
 import { judgeAnswer, formatCorrectAnswer, isManualType, answerLetters, effectiveType, isMultiChoice, isGradeable } from '../judge';
 import { paperQuestions, paperMinutes } from '../papers';
-import { matchTier, tierBadge, TIER_OPTIONS, type TierFilter } from '../provenance';
+import { matchTier, tierBadge } from '../provenance';
+import { batchOffset, emptyMessage, nextCursor, sessionHint, type QuizSession } from '../quizChain';
 import { answerPoints, isRecitable } from '../recite';
 import { loadOnePager, onePagerBlock } from '../onepager';
 import { recordPaperDone } from '../plan';
@@ -30,97 +31,144 @@ export function invalidateFavIds(): void {
   favIdsLoaded = false;
 }
 
+let lastSession: QuizSession | null = null;
+let seqCursor = 0;
+
+type Batch = { questions: Question[]; allAnswered: boolean; poolSize: number };
+
+async function assembleBatch(sess: QuizSession, paperSource: string, offset: number): Promise<Batch> {
+  const s = SUBJECTS.find(x => x.id === sess.subject);
+  let scopeChapters: string[] | null = null;
+  if (sess.chapter !== '') scopeChapters = [sess.chapter];
+  else if (sess.section !== '') scopeChapters = s?.sections.find(x => x.name === sess.section)?.chapters || null;
+  const inScope = (ch: string) => scopeChapters === null || scopeChapters.includes(ch);
+
+  let questions: Question[] = [];
+  let allAnswered = false;
+  if (paperSource !== '') {
+    questions = paperQuestions(await loadScopedQuestions(sess.subject, { source: paperSource }), paperSource);
+  } else if (sess.mode === 'wrong') {
+    questions = getLocal<WrongBookItem[]>('wrongBook', []).filter(q => q.subject === sess.subject && !q.mastered && inScope(q.chapter));
+  } else {
+    questions = scopeChapters !== null
+      ? await loadScopedQuestions(sess.subject, { chapters: scopeChapters })
+      : await loadQuestions(sess.subject);
+    const state = answerState();
+    if (sess.mode === 'fresh') {
+      const unmasteredIds = new Set(getLocal<WrongBookItem[]>('wrongBook', []).filter(w => !w.mastered).map(w => String(w.id)));
+      questions = questions.filter(q => state[String(q.id)] !== 'c' || unmasteredIds.has(String(q.id)));
+    }
+    if (sess.mode === 'continue') {
+      const scopedCount = questions.length;
+      questions = questions.filter(q => state[String(q.id)] === undefined);
+      if (questions.length === 0 && scopedCount > 0) allAnswered = true;
+    }
+    if (sess.mode === 'random') questions = shuffle(questions);
+  }
+  if (paperSource === '' && sess.mode !== 'wrong' && sess.tier !== '') {
+    questions = questions.filter(q => matchTier(q.source, sess.tier));
+  }
+  questions = questions.filter(isGradeable);
+  const poolSize = questions.length;
+  if (paperSource === '') questions = questions.slice(offset, offset + sess.count);
+  return { questions, allAnswered, poolSize };
+}
+
+function beginQuiz(sess: QuizSession, questions: Question[], paperSource: string, paperMin: number): void {
+  const s = SUBJECTS.find(x => x.id === sess.subject);
+  setQuizState({
+    subject: sess.subject,
+    subjectName: s ? s.name : '',
+    questions,
+    index: 0,
+    correct: 0,
+    wrong: 0,
+    total: questions.length
+  });
+  stopTimer();
+  if (paperSource !== '') {
+    const yearMatch = /(\d{4})/.exec(paperSource);
+    const limit = paperMin > 0 ? paperMin : paperMinutes(s ? s.id : sess.subject, Number(yearMatch?.[1] || 0), questions.length);
+    paperCtx = { source: paperSource, label: `${s ? s.name : ''} · ${paperSource}`, minutes: limit };
+    startTimer(limit);
+    lastSession = null;
+  } else {
+    paperCtx = null;
+    lastSession = sess;
+  }
+  const paperName = paperCtx ? (paperCtx.label.split(' · ')[1] || '') : '';
+  const scopeText = paperName !== '' ? paperName : sess.chapter !== '' ? sess.chapter : sess.section !== '' ? sess.section : '';
+  const title = document.getElementById('quizTitle');
+  if (title) title.textContent = s ? `${s.name}${scopeText !== '' ? ' · ' + scopeText : ''}` : '刷题';
+  renderQuestion();
+}
+
 export async function startQuiz(btn: HTMLButtonElement): Promise<void> {
   void loadOnePager();
+  const label = btn.textContent || '开始刷题';
   btn.disabled = true;
   btn.textContent = '加载中...';
   try {
     const modal = btn.closest<HTMLElement>('.modal-overlay');
-    if (!modal) { btn.disabled = false; btn.textContent = '开始刷题'; return; }
-    const subjectId = modal.dataset.subject || '';
-    const chapter = modal.dataset.chapter || '';
-    const section = modal.dataset.section || '';
-    const modeEl = modal.querySelector<HTMLElement>('.mode-option.active');
-    const mode = modeEl?.dataset.mode || 'random';
-    const rangeEl = modal.querySelector<HTMLInputElement>('input[type=range]');
-    const count = rangeEl ? parseInt(rangeEl.value) : 20;
-    const tierEl = modal.querySelector<HTMLSelectElement>('#tierFilter');
-    const tierFilter = (tierEl?.value || '') as TierFilter;
-
-    const s = SUBJECTS.find(x => x.id === subjectId);
+    if (!modal) return;
+    const s = SUBJECTS.find(x => x.id === (modal.dataset.subject || ''));
+    const sess: QuizSession = {
+      subject: modal.dataset.subject || '',
+      subjectName: s ? s.name : '',
+      chapter: modal.dataset.chapter || '',
+      section: modal.dataset.section || '',
+      mode: modal.querySelector<HTMLElement>('.mode-option.active')?.dataset.mode || 'random',
+      count: parseInt(modal.querySelector<HTMLInputElement>('input[type=range]')?.value || '20', 10) || 20,
+      tier: (modal.querySelector<HTMLSelectElement>('#tierFilter')?.value || '') as QuizSession['tier']
+    };
     const paperSource = (modal.dataset.paper || '').trim();
     const paperMin = parseInt(modal.dataset.minutes || '0', 10) || 0;
-    let scopeChapters: string[] | null = null;
-    if (chapter !== '') scopeChapters = [chapter];
-    else if (section !== '') scopeChapters = s?.sections.find(x => x.name === section)?.chapters || null;
-    const inScope = (ch: string) => scopeChapters === null || scopeChapters.includes(ch);
-
-    let questions: Question[] = [];
-    let allAnswered = false;
-    if (paperSource !== '') {
-      questions = paperQuestions(await loadScopedQuestions(subjectId, { source: paperSource }), paperSource);
-    } else if (mode === 'wrong') {
-      questions = getLocal<WrongBookItem[]>('wrongBook', []).filter(q => q.subject === subjectId && !q.mastered && inScope(q.chapter));
-    } else {
-      questions = scopeChapters !== null
-        ? await loadScopedQuestions(subjectId, { chapters: scopeChapters })
-        : await loadQuestions(subjectId);
-      const state = answerState();
-      if (mode === 'fresh') {
-        const unmasteredIds = new Set(getLocal<WrongBookItem[]>('wrongBook', []).filter(w => !w.mastered).map(w => String(w.id)));
-        questions = questions.filter(q => state[String(q.id)] !== 'c' || unmasteredIds.has(String(q.id)));
-      }
-      if (mode === 'continue') {
-        const scopedCount = questions.length;
-        questions = questions.filter(q => state[String(q.id)] === undefined);
-        if (questions.length === 0 && scopedCount > 0) allAnswered = true;
-      }
-      if (mode === 'random') questions = shuffle(questions);
-    }
-    if (paperSource === '' && mode !== 'wrong' && tierFilter !== '') {
-      questions = questions.filter(q => matchTier(q.source, tierFilter));
-    }
-    questions = questions.filter(isGradeable);
-    if (paperSource === '') questions = questions.slice(0, count);
-
-    if (questions.length === 0) {
-      if (tierFilter !== '' && !allAnswered) toast('所选来源下没有题目，把来源筛选改回「全部来源」再试');
-      else toast(allAnswered ? '题目已全部刷完，试试「错题重做」或更换范围' : (scopeChapters !== null ? '当前范围内暂无可刷题目' : '该科目暂无题目，请先添加题目'));
+    const offset = batchOffset(sess, 0);
+    const batch = await assembleBatch(sess, paperSource, offset);
+    if (batch.questions.length === 0) {
+      toast(emptyMessage(sess, { allAnswered: batch.allAnswered, poolSize: batch.poolSize, offset }));
       return;
     }
-
-    setQuizState({
-      subject: subjectId,
-      subjectName: s ? s.name : '',
-      questions,
-      index: 0,
-      correct: 0,
-      wrong: 0,
-      total: questions.length
-    });
-
+    seqCursor = nextCursor(sess, offset, batch.questions.length);
+    beginQuiz(sess, batch.questions, paperSource, paperMin);
     modal.remove();
     switchPage('quiz');
-    stopTimer();
-    if (paperSource !== '') {
-      const subject = s ? s.id : subjectId;
-      const yearMatch = /(\d{4})/.exec(paperSource);
-      const limit = paperMin > 0 ? paperMin : paperMinutes(subject, Number(yearMatch?.[1] || 0), questions.length);
-      paperCtx = { source: paperSource, label: `${s ? s.name : ''} · ${paperSource}`, minutes: limit };
-      startTimer(limit);
-    } else {
-      paperCtx = null;
-    }
-    const paperName = paperCtx ? (paperCtx.label.split(' · ')[1] || '') : '';
-    const scopeLabel = paperName !== '' ? paperName : chapter !== '' ? chapter : section !== '' ? section : '';
-    const title = document.getElementById('quizTitle');
-    if (title) title.textContent = s ? `${s.name}${scopeLabel !== '' ? ' · ' + scopeLabel : ''}` : '刷题';
-    renderQuestion();
   } catch (e) {
     toast('题目加载失败，请检查网络后重试');
   } finally {
     btn.disabled = false;
-    btn.textContent = '开始刷题';
+    btn.textContent = label;
+  }
+}
+
+function resetContinueButton(): void {
+  const btn = document.querySelector<HTMLButtonElement>('#continueBtn');
+  if (!btn) return;
+  btn.disabled = false;
+  btn.textContent = '继续刷题';
+}
+
+export async function continueFromResult(): Promise<void> {
+  const sess = lastSession;
+  if (!sess) { switchPage('home'); return; }
+  const btn = document.querySelector<HTMLButtonElement>('#continueBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '加载中...';
+  }
+  try {
+    const offset = batchOffset(sess, seqCursor);
+    const batch = await assembleBatch(sess, '', offset);
+    if (batch.questions.length === 0) {
+      toast(emptyMessage(sess, { allAnswered: batch.allAnswered, poolSize: batch.poolSize, offset }));
+    } else {
+      seqCursor = nextCursor(sess, offset, batch.questions.length);
+      beginQuiz(sess, batch.questions, '', 0);
+    }
+  } catch {
+    toast('题目加载失败，请检查网络后重试');
+  } finally {
+    resetContinueButton();
   }
 }
 
@@ -556,7 +604,10 @@ export function finishQuiz(): void {
     </div>
     <div class="accuracy-ring"><div class="pct">${accuracy}%</div><div class="lbl">正确率</div></div>
     <div style="padding:0 16px">
-      <button class="btn btn-primary" onclick="switchPage('home')">继续刷题</button>
+      ${lastSession
+        ? `<button class="btn btn-primary" id="continueBtn" onclick="continueFromResult()">继续刷题</button>
+           <div class="result-continue-hint">按「${esc(sessionHint(lastSession))}」继续下一组</div>`
+        : `<button class="btn btn-primary" onclick="switchPage('home')">继续刷题</button>`}
       ${wrong > 0 ? `<button class="btn btn-outline mt-8" onclick="retryWrong()">重做错题 (${wrong}题)</button>` : ''}
     </div>
   `;

@@ -316,6 +316,7 @@ export interface DirView {
   chapters: ChapterCount[];
   sources: SourceCount[];
   practiced: PracticedRow[];
+  answeredIds?: number;
   error?: string;
 }
 
@@ -427,6 +428,43 @@ function readViewCache(subject: string): DirView | null {
   return raw;
 }
 
+function answeredIdCount(): number {
+  return Object.keys(answerState()).length;
+}
+
+function localPracticedRows(subject: string): PracticedRow[] {
+  const state = answerState();
+  if (Object.keys(state).length === 0) return [];
+  const found = new Map<string, PracticedRow>();
+  const add = (row: DirectoryRow | Question): void => {
+    if (row.id === undefined || state[String(row.id)] === undefined) return;
+    found.set(String(row.id), { id: row.id, subject: row.subject, chapter: row.chapter, source: row.source });
+  };
+  const idx = readDirIndex(subject);
+  if (idx) for (const r of idx.rows) add(r);
+  for (const q of questionsCache) if (q.subject === subject) add(q);
+  for (const [key, rows] of scopedCache) {
+    if (key.slice(0, subject.length + 1) !== subject + '|') continue;
+    for (const q of rows) add(q);
+  }
+  return [...found.values()];
+}
+
+function localCoversSubject(subject: string): boolean {
+  const idx = readDirIndex(subject);
+  if (idx && idx.complete && idx.rows.length > 0) return true;
+  return filterBySubject(questionsCache, subject).length > 0;
+}
+
+function withLivePracticed(view: DirView, subject: string): DirView {
+  const state = answerState();
+  const kept = view.practiced.filter(p => p.id === undefined || state[String(p.id)] !== undefined);
+  const known = new Set(kept.map(p => String(p.id)));
+  const extra = localPracticedRows(subject).filter(p => p.id !== undefined && !known.has(String(p.id)));
+  if (extra.length === 0 && kept.length === view.practiced.length) return view;
+  return { ...view, practiced: kept.concat(extra) };
+}
+
 async function fetchDirView(subject: string): Promise<DirView> {
   const client = db;
   if (!client) {
@@ -455,8 +493,9 @@ function runViewFetch(subject: string, onUpdate?: (v: DirView) => void): Promise
     if (onUpdate) running.then(v => onUpdate(v)).catch(() => undefined);
     return running;
   }
-  const p = fetchDirView(subject).then(v => {
-    if (v.complete) setLocal(COUNTS_PREFIX + subject, v);
+  const p = fetchDirView(subject).then(raw => {
+    const v = withLivePracticed(raw, subject);
+    if (v.complete) setLocal(COUNTS_PREFIX + subject, { ...v, answeredIds: answeredIdCount() });
     if (onUpdate) onUpdate(v);
     return v;
   }).finally(() => {
@@ -469,8 +508,10 @@ function runViewFetch(subject: string, onUpdate?: (v: DirView) => void): Promise
 export function loadDirView(subject: string, onUpdate?: (v: DirView) => void): Promise<DirView> {
   const cached = readViewCache(subject);
   if (cached) {
-    if (!cached.complete || Date.now() - cached.at > VIEW_STALE_MS) void runViewFetch(subject, onUpdate);
-    return Promise.resolve(cached);
+    const countsStale = !cached.complete || Date.now() - cached.at > VIEW_STALE_MS;
+    const progressMoved = !localCoversSubject(subject) && answeredIdCount() !== cached.answeredIds;
+    if (db && (countsStale || progressMoved)) void runViewFetch(subject, onUpdate);
+    return Promise.resolve(withLivePracticed(cached, subject));
   }
   const idx = readDirIndex(subject);
   if (idx && idx.rows.length > 0) {
@@ -485,7 +526,7 @@ export function loadDirView(subject: string, onUpdate?: (v: DirView) => void): P
     }
   }
   void runViewFetch(subject, onUpdate);
-  return Promise.resolve(staticDirView(subject));
+  return Promise.resolve(withLivePracticed(staticDirView(subject), subject));
 }
 
 export function refreshDirView(subject: string, onUpdate?: (v: DirView) => void): Promise<DirView> {

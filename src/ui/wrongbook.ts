@@ -1,7 +1,7 @@
 import { SUBJECTS, TYPE_LABELS } from '../constants';
 import { getLocal } from '../storage';
 import { formatMath, esc } from '../utils';
-import { answerLetters } from '../judge';
+import { answerLetters, effectiveType } from '../judge';
 import type { WrongBookItem } from '../types';
 
 export function renderWrongBook(): void {
@@ -23,7 +23,7 @@ export function renderWrongBook(): void {
   if (emptyEl) emptyEl.style.display = filtered.length === 0 ? '' : 'none';
 
   const listHtml = filtered.map(q => {
-    const typeLabel = TYPE_LABELS[q.type] || '';
+    const typeLabel = TYPE_LABELS[effectiveType(q)] || '';
     const sub = SUBJECTS.find(s => s.id === q.subject);
     let optHtml = '';
     if (q.options && q.options.length) {

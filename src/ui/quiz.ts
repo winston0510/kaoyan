@@ -4,7 +4,7 @@ import { getLocal, setLocal, todayKey } from '../storage';
 import { answerState, markAnswer } from '../progress';
 import { shuffle, formatMath, toast, esc } from '../utils';
 import { loadQuestions, loadScopedQuestions, syncFavoriteToDB, syncRecordToDB, syncWrongBookToDB } from '../api';
-import { judgeAnswer, formatCorrectAnswer, isManualType, answerLetters } from '../judge';
+import { judgeAnswer, formatCorrectAnswer, isManualType, answerLetters, effectiveType, isMultiChoice, isGradeable } from '../judge';
 import { paperQuestions, paperMinutes } from '../papers';
 import { answerPoints, isRecitable } from '../recite';
 import { loadOnePager, onePagerBlock } from '../onepager';
@@ -74,6 +74,7 @@ export async function startQuiz(btn: HTMLButtonElement): Promise<void> {
       }
       if (mode === 'random') questions = shuffle(questions);
     }
+    questions = questions.filter(isGradeable);
     if (paperSource === '') questions = questions.slice(0, count);
 
     if (questions.length === 0) {
@@ -192,8 +193,8 @@ export function renderQuestion(): void {
   if (fill) fill.style.width = pct + '%';
   if (prog) prog.textContent = `${st.index + 1}/${st.total}`;
 
-  const typeLabel = TYPE_LABELS[q.type] || '单选题';
-  const isMultiple = q.type === 'multiple';
+  const typeLabel = TYPE_LABELS[effectiveType(q)] || '单选题';
+  const isMultiple = isMultiChoice(q);
   const isFav = isFavorite(q.id);
 
   let optionsHtml = '';
@@ -283,7 +284,7 @@ export function submitAnswer(): void {
   const st = quizState;
   if (!st) return;
   const q = st.questions[st.index];
-  const isMultiple = q.type === 'multiple';
+  const isMultiple = isMultiChoice(q);
   let userAnswer: string;
 
   if (q.type === 'fill') {
@@ -351,7 +352,7 @@ export function submitAnswer(): void {
     userAnswer = (sel as HTMLElement).dataset.letter || '';
   }
 
-  const isCorrect = judgeAnswer(q.type, userAnswer, q.answer);
+  const isCorrect = judgeAnswer(effectiveType(q), userAnswer, q.answer);
   const letters = answerLetters(q.answer);
 
   const allOptions = document.querySelectorAll('#quizContent .option');

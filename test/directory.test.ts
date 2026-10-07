@@ -103,6 +103,14 @@ describe('发布快照计数', () => {
     }
   });
 
+  it('快照套卷条目是 [source, type, total] 三元组', () => {
+    const papers = BANK.papers as unknown as Record<string, unknown[][]>;
+    for (const sub of SUBJECTS) {
+      const bad = (papers[sub.id] || []).filter(e => e.length !== 3 || typeof e[0] !== 'string' || typeof e[1] !== 'string' || typeof e[2] !== 'number');
+      expect(bad, sub.id).toEqual([]);
+    }
+  });
+
   it('无缓存时目录先用快照渲染，不等网络', async () => {
     setDb(viewDb().client);
     const view = await loadDirView('politics');
@@ -110,6 +118,8 @@ describe('发布快照计数', () => {
     expect(view.complete).toBe(false);
     expect(view.chapters.length).toBeGreaterThan(50);
     expect(view.chapters.reduce((a, c) => a + c.total, 0)).toBe(6943);
+    expect(view.sources.every(s => typeof s.source === 'string' && typeof s.type === 'string'), '快照套卷的 source/type 必须是字符串，科目页渲染时会对它 trim').toBe(true);
+    expect(view.sources.some(s => /^\d{4}年真题$/.test(s.source)), '快照应带出真题套卷').toBe(true);
   });
 
   it('快照之后后台核对云端，回调拿到完整计数', async () => {

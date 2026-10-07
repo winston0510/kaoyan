@@ -3,6 +3,7 @@ import { getLocal, setLocal } from '../storage';
 import { setQuizState } from '../state';
 import { syncFavoriteToDB } from '../api';
 import { toast, formatMath, esc } from '../utils';
+import { effectiveType } from '../judge';
 import { switchPage } from './navigation';
 import { renderQuestion, invalidateFavIds } from './quiz';
 import type { FavoriteItem } from '../types';
@@ -32,7 +33,7 @@ export function renderFavorites(): void {
   if (emptyEl) emptyEl.style.display = list.length === 0 ? '' : 'none';
 
   const listHtml = list.map(q => {
-    const typeLabel = TYPE_LABELS[q.type] || '';
+    const typeLabel = TYPE_LABELS[effectiveType(q)] || '';
     return `<div class="fav-card" data-id="${q.id}">
       <div class="wc-header"><span class="tag tag-gray">${typeLabel}</span><span class="tag tag-amber">${favTitle(q.subject)} · ${esc(q.chapter || '')}</span></div>
       <div class="fav-question">${formatMath(q.question)}</div>

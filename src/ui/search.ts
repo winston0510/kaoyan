@@ -2,6 +2,7 @@ import { SUBJECTS, TYPE_LABELS } from '../constants';
 import { setQuizState } from '../state';
 import { ensureAllQuestions } from '../api';
 import { formatMath, esc } from '../utils';
+import { effectiveType } from '../judge';
 import { switchPage } from './navigation';
 import { renderQuestion } from './quiz';
 import type { Question } from '../types';
@@ -38,7 +39,7 @@ export async function doSearch(): Promise<void> {
   box.innerHTML = `<div style="padding:0 2px 8px;font-size:.75rem;color:var(--text-secondary)">找到 ${searchResults.length} 题，点击进入作答</div>` +
     searchResults.map((q, i) => {
       const s = SUBJECTS.find(x => x.id === q.subject);
-      const typeLabel = TYPE_LABELS[q.type] || '';
+      const typeLabel = TYPE_LABELS[effectiveType(q)] || '';
       return `<div class="search-result" onclick="startSearchQuiz(${i})">
         <div><span class="tag tag-amber">${s ? s.name : esc(q.subject)}</span><span class="tag tag-gray">${typeLabel}</span>${q.chapter ? `<span class="tag tag-gray">${esc(q.chapter)}</span>` : ''}</div>
         <div class="sr-title">${formatMath(q.question)}</div>

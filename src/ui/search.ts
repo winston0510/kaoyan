@@ -3,6 +3,7 @@ import { setQuizState } from '../state';
 import { ensureAllQuestions } from '../api';
 import { formatMath, esc } from '../utils';
 import { effectiveType } from '../judge';
+import { tierBadge } from '../provenance';
 import { switchPage } from './navigation';
 import { renderQuestion } from './quiz';
 import type { Question } from '../types';
@@ -41,7 +42,7 @@ export async function doSearch(): Promise<void> {
       const s = SUBJECTS.find(x => x.id === q.subject);
       const typeLabel = TYPE_LABELS[effectiveType(q)] || '';
       return `<div class="search-result" onclick="startSearchQuiz(${i})">
-        <div><span class="tag tag-amber">${s ? s.name : esc(q.subject)}</span><span class="tag tag-gray">${typeLabel}</span>${q.chapter ? `<span class="tag tag-gray">${esc(q.chapter)}</span>` : ''}</div>
+        <div><span class="tag tag-amber">${s ? s.name : esc(q.subject)}</span><span class="tag tag-gray">${typeLabel}</span>${tierBadge(q.source)}${q.chapter ? `<span class="tag tag-gray">${esc(q.chapter)}</span>` : ''}</div>
         <div class="sr-title">${formatMath(q.question)}</div>
       </div>`;
     }).join('');

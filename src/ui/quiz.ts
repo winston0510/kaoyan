@@ -6,6 +6,7 @@ import { shuffle, formatMath, toast, esc } from '../utils';
 import { loadQuestions, loadScopedQuestions, syncFavoriteToDB, syncRecordToDB, syncWrongBookToDB } from '../api';
 import { judgeAnswer, formatCorrectAnswer, isManualType, answerLetters, effectiveType, isMultiChoice, isGradeable } from '../judge';
 import { paperQuestions, paperMinutes } from '../papers';
+import { matchTier, tierBadge, TIER_OPTIONS, type TierFilter } from '../provenance';
 import { answerPoints, isRecitable } from '../recite';
 import { loadOnePager, onePagerBlock } from '../onepager';
 import { recordPaperDone } from '../plan';
@@ -43,6 +44,8 @@ export async function startQuiz(btn: HTMLButtonElement): Promise<void> {
     const mode = modeEl?.dataset.mode || 'random';
     const rangeEl = modal.querySelector<HTMLInputElement>('input[type=range]');
     const count = rangeEl ? parseInt(rangeEl.value) : 20;
+    const tierEl = modal.querySelector<HTMLSelectElement>('#tierFilter');
+    const tierFilter = (tierEl?.value || '') as TierFilter;
 
     const s = SUBJECTS.find(x => x.id === subjectId);
     const paperSource = (modal.dataset.paper || '').trim();
@@ -74,11 +77,15 @@ export async function startQuiz(btn: HTMLButtonElement): Promise<void> {
       }
       if (mode === 'random') questions = shuffle(questions);
     }
+    if (paperSource === '' && mode !== 'wrong' && tierFilter !== '') {
+      questions = questions.filter(q => matchTier(q.source, tierFilter));
+    }
     questions = questions.filter(isGradeable);
     if (paperSource === '') questions = questions.slice(0, count);
 
     if (questions.length === 0) {
-      toast(allAnswered ? '题目已全部刷完，试试「错题重做」或更换范围' : (scopeChapters !== null ? '当前范围内暂无可刷题目' : '该科目暂无题目，请先添加题目'));
+      if (tierFilter !== '' && !allAnswered) toast('所选来源下没有题目，把来源筛选改回「全部来源」再试');
+      else toast(allAnswered ? '题目已全部刷完，试试「错题重做」或更换范围' : (scopeChapters !== null ? '当前范围内暂无可刷题目' : '该科目暂无题目，请先添加题目'));
       return;
     }
 
@@ -216,7 +223,7 @@ export function renderQuestion(): void {
         <div class="q-tags">
           <span class="tag tag-blue">${typeLabel}</span>
           <span class="tag tag-gray">${esc(q.chapter || '')}</span>
-          ${q.source ? `<span class="tag tag-green">${esc(q.source)}</span>` : ''}
+          ${tierBadge(q.source)}${q.source ? `<span class="tag tag-green">${esc(q.source)}</span>` : ''}
         </div>
         <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(this)" title="收藏/取消收藏">${isFav ? '★' : '☆'}</button>
       </div>

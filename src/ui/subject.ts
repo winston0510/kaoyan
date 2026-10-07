@@ -4,6 +4,7 @@ import { esc, toast } from '../utils';
 import { BANK_COUNTS_DATE, hasCloud, loadDirView, loadScopedQuestions, refreshDirView, warmSubjectQuestions } from '../api';
 import type { DirView } from '../api';
 import { isPaperSource, paperFromCounts, paperLabel, paperMinutes, paperQuestions } from '../papers';
+import { TIER_OPTIONS } from '../provenance';
 import { paperDoneFor } from '../plan';
 import { switchPage } from './navigation';
 import type { Question, QuestionType, WrongBookItem } from '../types';
@@ -183,6 +184,9 @@ export function openQuizModal(subjectId: string, chapter: string, section: strin
     </div>
     <div style="margin-bottom:20px"><label style="font-size:.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:8px">题目数量：<span id="modalCount">20</span> 题</label>
       <input type="range" min="5" max="50" step="5" value="20" oninput="document.getElementById('modalCount').textContent=this.value">
+    </div>
+    <div style="margin-bottom:20px"><label style="font-size:.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:8px">来源范围</label>
+      <select id="tierFilter" class="tier-select">${TIER_OPTIONS.map(o => `<option value="${o.id}">${o.label} · ${o.desc}</option>`).join('')}</select>
     </div>
     <button class="btn btn-primary" onclick="startQuiz(this)">开始刷题</button>
   </div>`;

@@ -141,6 +141,12 @@ button{cursor:pointer;border:none;background:none;color:inherit}
 .tag-red{background:var(--danger-light);color:#C11D13}
 .tag-blue{background:var(--primary-light);color:var(--primary)}
 .tag-gray{background:var(--fill);color:var(--text-secondary)}
+.tag-tier{border:1px solid transparent}
+.tier-paper{background:var(--success-light);color:#0A7A3D}
+.tier-named{background:var(--primary-light);color:var(--primary)}
+.tier-style{background:var(--warning-light);color:#B45309}
+.tier-unknown{background:transparent;border-color:color-mix(in srgb,var(--danger) 45%,transparent);color:var(--danger)}
+.tier-select{width:100%;padding:11px 12px;border:1px solid var(--hairline);border-radius:var(--radius);font-size:.9rem;background:var(--fill);color:var(--text);outline:none}
 
 .today-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 16px 6px}
 .today-stat{display:flex;flex-direction:column-reverse;align-items:flex-start;padding:16px;border-radius:18px}

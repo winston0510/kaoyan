@@ -2,6 +2,7 @@ import { SUBJECTS, TYPE_LABELS } from '../constants';
 import { getLocal } from '../storage';
 import { formatMath, esc } from '../utils';
 import { answerLetters, effectiveType } from '../judge';
+import { tierBadge } from '../provenance';
 import type { WrongBookItem } from '../types';
 
 export function renderWrongBook(): void {
@@ -36,7 +37,7 @@ export function renderWrongBook(): void {
       }).join('');
     }
     return `<div class="wrong-card">
-      <div class="wc-header"><span class="tag tag-gray">${typeLabel}</span><span class="tag tag-red" style="font-size:.6875rem">${sub ? sub.name : ''} · ${esc(q.chapter || '')}</span></div>
+      <div class="wc-header"><span class="tag tag-gray">${typeLabel}</span>${tierBadge(q.source)}<span class="tag tag-red" style="font-size:.6875rem">${sub ? sub.name : ''} · ${esc(q.chapter || '')}</span></div>
       <div class="wc-question">${formatMath(q.question)}</div>
       ${optHtml ? `<div class="wc-options">${optHtml}</div>` : ''}
       <div class="wc-answer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">

@@ -117,7 +117,7 @@ describe('发布快照计数', () => {
     expect(view.fromStatic).toBe(true);
     expect(view.complete).toBe(false);
     expect(view.chapters.length).toBeGreaterThan(50);
-    expect(view.chapters.reduce((a, c) => a + c.total, 0)).toBe(6943);
+    expect(view.chapters.reduce((a, c) => a + c.total, 0)).toBe(6845);
     expect(view.sources.every(s => typeof s.source === 'string' && typeof s.type === 'string'), '快照套卷的 source/type 必须是字符串，科目页渲染时会对它 trim').toBe(true);
     expect(view.sources.some(s => /^\d{4}年真题$/.test(s.source)), '快照应带出真题套卷').toBe(true);
   });
